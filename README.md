@@ -1,4 +1,4 @@
-<h1 align="center">CACA</h1>
+<h1 align="center">BROTO</h1>
 
 ## :memo: Descrição
 Broto é uma plataforma colaborativa que conecta amantes da jardinagem e sustentabilidade para doação e troca de mudas de plantas. Nosso objetivo é criar uma comunidade onde as pessoas possam compartilhar o que têm em seus jardins e lares, promovendo a biodiversidade e o acesso a diferentes espécies de plantas sem custo.
