@@ -1,5 +1,4 @@
 <script setup>
-    import EntrarPage from '../components/PageEntrar.vue';
 </script>
 
 <template>

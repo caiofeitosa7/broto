@@ -18,7 +18,7 @@
             <img src="@/assets/images/wave.svg" alt="">
         </div>
         <div id="container-form" class="is-flex is-flex-direction-column is-align-items-center">
-            <form action="">
+            <form action="" method="post">
                 <p class="has-text-centered pb-1">
                     Bem Vindo!
                 </p>
@@ -29,14 +29,6 @@
                     <label for="usuario"><i class="bi bi-person-fill"></i></label>
                     <input id="usuario" name="usuario">
                 </div>
-                <!-- <div class="campo-input px-3 py-2">
-                    <label for="senha"><i class="bi bi-lock-fill"></i></label>
-                    <input id="senha" name="senha" type="password">
-                </div> -->
-
-
-
-
                 <div class="campo-input px-3 py-2">
                     <label for="senha"><i class="bi bi-lock-fill"></i></label>
                     <input id="senha" name="senha" :type="isPasswordVisible ? 'text' : 'password'">
@@ -44,18 +36,10 @@
                         <i :class="isPasswordVisible ? 'bi bi-eye-fill m-0' : 'bi bi-eye-slash-fill m-0'"></i>
                     </div>
                 </div>
-
-
-
-
-
-
-
-
                 <p class="has-text-weight-medium has-text-right is-clickable is-size-7 pt-1">
                     Esqueci a senha*
                 </p>
-                <button class="btn-cor-principal mt-6 py-2">
+                <button class="btn-cor-principal mt-6 py-2" type="submit">
                     Entrar
                 </button>
             </form>
