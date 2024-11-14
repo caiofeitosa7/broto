@@ -1,17 +1,29 @@
 /* @import './base.css'; */
 
 @import url('https://fonts.googleapis.com/css2?family=Aboreto&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Aboreto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pridi:wght@200;300;400;500;600;700&display=swap');
 
 :root {
+    --preto: #4d4d4d;
     --verde-claro: #CEE9E2;
     --cor-principal: #267762;
+}
+
+.columns {
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    margin-top: 0 !important;
+}
+
+html {
+    max-height: 100vh;
+    overflow: auto;
 }
 
 body {
     font-family: "Poppins", sans-serif;
     line-height: 14px;
-    color: #686868;
+    color: var(--preto);
 }
 
 a {

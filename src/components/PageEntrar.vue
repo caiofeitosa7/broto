@@ -39,9 +39,14 @@
                 <p class="has-text-weight-medium has-text-right is-clickable is-size-7 pt-1">
                     Esqueci a senha*
                 </p>
-                <button class="btn-cor-principal mt-6 py-2" type="submit">
+                <button class="btn-cor-principal mt-6 py-2">
                     Entrar
                 </button>
+                <!-- <div class="mt-3">
+                    <router-link to="/home">
+                        Entrar
+                    </router-link>
+                </div> -->
             </form>
         </div>
     </div>
