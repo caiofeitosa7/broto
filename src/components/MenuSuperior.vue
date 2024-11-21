@@ -33,17 +33,21 @@
                 DOE MUDAS, SEMEIE O FUTURO.
             </h2>
         </div>
-        <ul class="container nav-especies px-6">
-            <li>PALMEIRAS</li>
-            <li>FRUTÍFERAS</li>
-            <li>HERBÁCEAS</li>
-            <li>ARBUSTOS</li>
-            <li>BAMBUS</li>
-            <!-- <li>ORNAMENTAIS</li>
-            <li>TREPADEIRAS</li>
-            <li>FLORES</li>
-            <li>TEMPEROS</li>
-            <li>SUCULENTAS</li> -->
+        <ul class="nav-especies is-flex is-justify-content-center is-align-items-center py-4 px-2">
+            <div class="container is-flex is-justify-content-space-between is-align-items-center px-3">
+                <i class="bi bi-chevron-left is-size-5 is-clickable px-2"></i>
+                <li>PALMEIRAS</li>
+                <li>FRUTÍFERAS</li>
+                <li>HERBÁCEAS</li>
+                <li>ARBUSTOS</li>
+                <li>BAMBUS</li>
+                <!-- <li>ORNAMENTAIS</li>
+                <li>TREPADEIRAS</li>
+                <li>FLORES</li>
+                <li>TEMPEROS</li>
+                <li>SUCULENTAS</li> -->
+                <i class="bi bi-chevron-right is-size-5 is-clickable px-2"></i>
+            </div>
         </ul>
     </div>
 </template>
@@ -95,13 +99,18 @@
     }
 
     .nav-especies {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        background-color: #f3f3f3;
         /* font-family: "Noto Serif"; */
+/* 
+        div {
+            wid
+        } */
 
         li {
-            border-bottom: 3px solid var(--cor-principal);
+            border-bottom: 3px solid #81b5b0;
+            padding-bottom: 3px;
+            font-weight: 500;
+            cursor: pointer;
         }
     }
 
