@@ -13,9 +13,9 @@
         },
         data() {
             return {
-                // showModalMensagem: false,
-                // tituloModalMensagem: "",
-                // conteudoModalMenasagem: "",
+                showModal: false,
+                tituloModal: "",
+                conteudoModal: "",
                 showModalCadastrarPlanta: false,
                 showModalVerPlanta: false,
                 plantaClicada: {}

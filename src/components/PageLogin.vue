@@ -1,9 +1,40 @@
-<script setup>
+<script>
+    import { useAuthStore } from "@/stores/auth";
+    import { useRouter } from "vue-router";
+    import axios from "axios";
     import { ref } from 'vue';
 
-    const isPasswordVisible = ref(false);
-    const togglePasswordVisibility = () => {
-        isPasswordVisible.value = !isPasswordVisible.value;
+    export default {
+        setup() {
+            const router = useRouter();
+            const authStore = useAuthStore();
+            const isPasswordVisible = ref(false);
+            const togglePasswordVisibility = () => {
+                isPasswordVisible.value = !isPasswordVisible.value;
+            };
+
+            const urlLogin = "http://127.0.0.1:5000/login";
+            const form = ref({ usuario: "", senha: "" });
+            const erro = ref("");
+
+            const realizarLogin = async () => {
+                try {
+                    const response = await axios.post(urlLogin, form.value);
+                    authStore.login(response.data.user.id, response.data.user.nome);
+                    router.push({ name: "home" });
+                } catch (error) {
+                    erro.value = error.response?.data?.message || "Erro ao realizar login";
+                }
+            };
+
+            return {
+                realizarLogin,
+                isPasswordVisible,
+                togglePasswordVisibility,
+                form,
+                erro,
+            };
+        },
     };
 </script>
 
@@ -18,7 +49,7 @@
             <img src="@/assets/images/wave.svg" alt="">
         </div>
         <div id="container-form" class="is-flex is-flex-direction-column is-align-items-center">
-            <form action="" method="post">
+            <form @submit.prevent="realizarLogin">
                 <p class="has-text-centered pb-1">
                     Bem Vindo!
                 </p>
@@ -27,11 +58,11 @@
                 </p>
                 <div class="campo-input px-3 py-2 mb-4 mt-6">
                     <label for="usuario"><i class="bi bi-person-fill"></i></label>
-                    <input id="usuario" name="usuario">
+                    <input id="usuario" v-model="form.usuario">
                 </div>
                 <div class="campo-input px-3 py-2">
                     <label for="senha"><i class="bi bi-lock-fill"></i></label>
-                    <input id="senha" name="senha" :type="isPasswordVisible ? 'text' : 'password'">
+                    <input id="senha" v-model="form.senha" :type="isPasswordVisible ? 'text' : 'password'">
                     <div @click="togglePasswordVisibility" class="is-clickable ml-2">
                         <i :class="isPasswordVisible ? 'bi bi-eye-fill m-0' : 'bi bi-eye-slash-fill m-0'"></i>
                     </div>
@@ -39,15 +70,11 @@
                 <p class="has-text-weight-medium has-text-right is-clickable is-size-7 pt-1">
                     Esqueci a senha*
                 </p>
-                <button class="btn-cor-principal mt-6 py-2">
+                <button class="btn-cor-principal mt-6 py-2" type="submit">
                     Entrar
                 </button>
-                <!-- <div class="mt-3">
-                    <router-link to="/home">
-                        Entrar
-                    </router-link>
-                </div> -->
             </form>
+            <p v-if="erro" class="help is-danger">{{ erro }}</p>
         </div>
     </div>
 </template>

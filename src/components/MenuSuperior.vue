@@ -1,4 +1,4 @@
-<script setup>
+<script>
 </script>
 
 <template>
@@ -13,7 +13,7 @@
             </div>
         </div>
         <div class="is-flex is-align-items-center">
-            <router-link class="is-size-7 mr-4" to="/entrar">
+            <router-link class="is-size-7 mr-4" to="/login">
                 Login
             </router-link>
             <!-- <div class="is-clickable is-size-5 mr-4">

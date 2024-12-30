@@ -8,6 +8,9 @@
         },
         data() {
             return {
+                urlAddUsuario: "http://127.0.0.1:5000/add_usuario",
+                urlVerificarUsuario: 'http://127.0.0.1:5000/verificar_usuario',
+                
                 showModal: false,
                 titleModal: "",
                 contentModal: "",
@@ -27,7 +30,6 @@
                     usuario: "",
                     senha: "",
                 },
-                apiUrl: "http://127.0.0.1:5000/add_usuario",
             };
         },
         methods: {
@@ -47,7 +49,7 @@
             },
             async verificarUsuarioExistente() {
                 try {
-                    const response = await axios.get('http://127.0.0.1:5000/verificar_usuario', {
+                    const response = await axios.get(urlVerificarUsuario, {
                         params: { usuario: this.formData.usuario }
                     });
                     this.usuarioExistente = response.data.existe;
@@ -56,7 +58,7 @@
                 }
             },
             async cadastrarUsuario(event) {
-                event.preventDefault(); // Evita o recarregamento da página
+                event.preventDefault();
                 this.verificarSenhas();
 
                 this.formData.senha = this.senha;
@@ -76,7 +78,7 @@
                     return;
                 }
 
-                const response = await axios.get('http://127.0.0.1:5000/verificar_usuario', {
+                const response = await axios.get(this.urlVerificarUsuario, {
                     params: { usuario: this.formData.usuario }
                 });
 
@@ -89,9 +91,7 @@
 
                 try {
                     this.formData.senha = this.senha;
-                    const response = await axios.post(this.apiUrl, this.formData);
-
-                    console.log(response.data);
+                    const response = await axios.post(this.urlAddUsuario, this.formData);
 
                     this.titleModal = "Sucesso!";
                     this.contentModal = "Cadastro realizado com sucesso.";
@@ -225,7 +225,7 @@
                     <button class="btn-cor-principal py-2" @click="cadastrarUsuario">
                         Cadastrar
                     </button>
-                    <router-link to="/entrar" class="is-size-7 mb-2 p-2 mt-3">
+                    <router-link to="/login" class="is-size-7 mb-2 p-2 mt-3">
                         Já tenho uma conta
                     </router-link>
                 </div>
