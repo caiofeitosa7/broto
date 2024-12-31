@@ -10,7 +10,6 @@
             return {
                 urlAddUsuario: "http://127.0.0.1:5000/add_usuario",
                 urlVerificarUsuario: 'http://127.0.0.1:5000/verificar_usuario',
-                
                 showModal: false,
                 titleModal: "",
                 contentModal: "",
@@ -235,6 +234,10 @@
 </template>
 
 <style scoped>
+    .columns {
+        margin-bottom: 0;
+    }
+
     .container-wave {
         background-image: url('@/assets/images/banner_inicio.jpg');
         height: max-content;

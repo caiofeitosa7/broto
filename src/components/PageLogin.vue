@@ -70,11 +70,16 @@
                 <p class="has-text-weight-medium has-text-right is-clickable is-size-7 pt-1">
                     Esqueci a senha*
                 </p>
-                <button class="btn-cor-principal mt-6 py-2" type="submit">
+                <button class="btn-cor-principal mt-6 p-2" type="submit">
                     Entrar
                 </button>
+                <p v-if="erro" class="help is-danger">{{ erro }}</p>
+                <div class="is-flex is-align-items-center is-justify-content-center mt-2">
+                    <router-link to="/criar_conta" class="is-size-7 p-2 mt-2">
+                        Não tenho uma conta
+                    </router-link>
+                </div>
             </form>
-            <p v-if="erro" class="help is-danger">{{ erro }}</p>
         </div>
     </div>
 </template>

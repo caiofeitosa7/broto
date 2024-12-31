@@ -10,6 +10,12 @@
     --verde-secundario: #30957b;
 }
 
+
+
+.text-nowrap {
+    text-wrap: nowrap;
+}
+
 .columns {
     margin-inline-end: 0 !important;
     margin-inline-start: 0 !important;

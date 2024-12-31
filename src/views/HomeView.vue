@@ -3,22 +3,28 @@
     import ModalMensagem from '../components/ModalMensagem.vue'
     import Menu from '../components/menuSuperior.vue'
     import RodaPe from '../components/RodaPe.vue'
+    import axios from "axios";
 
     export default {
         components: {
             ModalMensagem,
-            // ModalCadastrarPlanta,
             Menu,
             RodaPe
         },
         data() {
             return {
+                urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 showModal: false,
                 tituloModal: "",
                 conteudoModal: "",
                 showModalCadastrarPlanta: false,
                 showModalVerPlanta: false,
-                plantaClicada: {}
+                showModalProcurar: false,
+                fotoCarregada: false,
+                fotoPreview: null,
+                plantaClicada: {},
+                plantasEncontradas: [],
+                mensagemErro: "",
             };
         },
         methods: {
@@ -26,12 +32,66 @@
                 this.showModalCadastrarPlanta = false;
                 this.showModalVerPlanta = false;
                 this.showModalMensagem = false;
+                this.fotoCarregada = false;
             },
             openModalCadastrarPlanta() {
                 this.showModalCadastrarPlanta = true;
             },
-            async openModalVerPlanta(plantaId) {
+            abrirModalProcurar() {
+                this.showModalProcurar = true;
+            },
+            closeModalProcurar() {
+                this.showModalProcurar = false;
+            },
+            // verificarInputPesquisa() {
+            //     if (this.nomePlantaProcurar.length < 3) {
+            //         this.mensagemErro = "Digite pelo menos 3 letras.";
+            //         this.plantasEncontradas = [];
+            //     } else {
+            //         this.mensagemErro = "";
+            //     }
+            // },
+            async buscarPlantas() {
+                if (this.nomePlantaProcurar.length < 3) {
+                    this.mensagemErro = "Digite pelo menos 3 letras.";
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(this.urlBuscarPlanta, {
+                        params: { query: this.nomePlantaProcurar }
+                    });
+
+                    if (response.data.length) {
+                        this.plantasEncontradas = response.data;
+                        this.mensagemErro = "";
+                    } else {
+                        this.plantasEncontradas = [];
+                        this.mensagemErro = "Nenhuma planta foi encontrada.";
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar plantas:", error);
+                    this.mensagemErro = "Erro ao buscar plantas. Tente novamente.";
+                }
+            },
+            previewFile(event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.fotoPreview = e.target.result;
+                        this.fotoCarregada = true;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+            abrirInputFoto() {
+                document.getElementById("input-foto").click()
+            },
+            async openModalVerPublicacao(plantaId) {
                 this.showModalVerPlanta = true;
+
                 try {
                     // const response = await fetch(`https://api.example.com/plants/${plantaId}`);
                     // if (!response.ok) throw new Error("Erro ao buscar dados da planta");
@@ -49,26 +109,6 @@
                     this.plantaClicada = { nomeComum: "Erro ao carregar dados" };
                 }
             },
-            previewFile(event, index) {
-                let file = document.getElementById("input-foto").files[0];
-                let preview = document.getElementById("foto-preview");
-                let reader = new FileReader();
-
-                reader.addEventListener(
-                    "load",
-                    () => {
-                        preview.src = reader.result;  
-                    },
-                    false
-                );
-
-                if (file) {
-                    reader.readAsDataURL(file);
-                }
-            },
-            abrirInputFoto() {
-                document.getElementById("input-foto").click()
-            }
         }
     };
 </script>
@@ -76,12 +116,13 @@
 <template>
     <ModalMensagem :showModal="showModal" :titleModal="tituloModal" :contentModal="conteudoModal" @close="closeModal"/>
 
+    <!-- Modal de Visualizar Planta -->
     <div v-if="showModalVerPlanta" class="modal is-active">
         <div class="modal-background" @click="closeModal"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
                 <div class="is-flex is-flex-direction-column is-justify-align-items-center">
-                    <img src="@/assets/images/image_8.png" alt="foto da planta">
+                    <img class="imagem-planta" src="@/assets/images/image_8.png" alt="foto da planta">
                     <p class="has-text-centered has-text-weight-medium is-size-4 pt-3">
                         {{ plantaClicada.nomeComum || 'Carregando...' }}
                     </p>
@@ -106,33 +147,61 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
     </div>
 
+    <!-- Modal de Cadastrar Planta -->
     <div v-if="showModalCadastrarPlanta" class="modal is-active">
         <div class="modal-background" @click="closeModal"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
                 <div class="is-flex is-flex-direction-column is-justify-align-items-center">
-                    <div class="container-foto">
-                        <img id="foto-preview" class="foto-preview is-clickable" src="@/assets/images/slot-foto.png" @click="abrirInputFoto()">
-                        <input id="input-foto" type="file" accept="image/*" @change="previewFile($event, index)" hidden/>
+                    <div class="container-foto is-clickable" @click="abrirInputFoto()">
+                        <!-- Slot-foto: Aparece apenas se não houver uma imagem carregada -->
+                        <div
+                            id="slot-foto" 
+                            v-if="!fotoCarregada"
+                            class="is-flex is-justify-content-center is-align-items-center"
+                        >
+                            <i class="bi bi-image-fill"></i>
+                        </div>
+
+                        <!-- Foto-preview: Aparece apenas se uma imagem for carregada -->
+                        <img
+                            v-if="fotoCarregada"
+                            id="foto-preview"
+                            :src="fotoPreview"
+                            class="imagem-planta is-clickable"
+                            alt="Pré-visualização da foto"
+                        />
+
+                        <!-- Input de arquivo -->
+                        <input
+                            id="input-foto"
+                            type="file"
+                            accept="image/*"
+                            @change="previewFile"
+                            hidden
+                        />
+
+                        <span class="label-imagem is-size-7">
+                            click para adicionar a foto
+                        </span>
                     </div>
                 </div>
-                <div class="is-flex is-justify-content-space-between is-align-items-center py-2">
-                    <label for="nome-planta">Planta:</label>
-                    <select id="nome-planta">
-                        <option value="1">MINI MARANTA CHARUTO</option>
-                        <option value="2">CRÓTON EBURNEUM</option>
-                        <option value="3">TRITOMA</option>
-                        <option value="4">MERTHIOLATE</option>
-                        <option value="5">COLMANARA</option>
-                    </select>
+                <div class="is-flex is-justify-content-space-between is-align-items-center pb-2">
+                    <label for="nome-planta" class="text-nowrap">
+                        Nome da planta:
+                    </label>
+                    <button class="btn btn-nome-planta is-size-7" @click="abrirModalProcurar">
+                        <span>Procurar</span>
+                        <i class="bi bi-search ml-3"></i>
+                    </button>
                 </div>
                 <div class="is-flex is-justify-content-space-between is-align-items-center py-2">
-                    <label for="quatidade-mudas" style="text-wrap: nowrap;">
-                        Quantidade de mudas:
+                    <label for="quatidade-mudas" class="text-nowrap">
+                        Quantas de mudas?
                     </label>
                     <input id="quatidade-mudas" type="number" min="0">
                 </div>
-                <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
+                <div class="btn-cadastrar is-flex is-justify-content-center mt-5 py-3">
                     Cadastrar
                 </div>
             </div>
@@ -140,12 +209,64 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
     </div>
 
+    <!-- Modal de Procurar Planta -->
+    <div v-if="showModalProcurar" id="modalProcurarPlanta" class="modal is-active">
+        <div class="modal-background" @click="closeModalProcurar"></div>
+        <div class="modal-content is-flex is-justify-content-center px-5">
+            <div class="box">
+            <div class="field">
+                <label for="procurar-planta" class="label mb-3">
+                    Nome da planta:
+                </label>
+                <div class="campo-pesquisa px-4 py-2">
+                    <input
+                        id="procurar-planta"
+                        v-model="nomePlantaProcurar"
+                        placeholder="Digite o nome da planta"
+                    />
+                    <!-- <input
+                        id="procurar-planta"
+                        @input="verificarInputPesquisa"
+                        v-model="nomePlantaProcurar"
+                        placeholder="Digite o nome da planta"
+                    /> -->
+                    <i class="bi bi-search is-clickable" @click="buscarPlantas"></i>
+                </div>
+                <div class="is-flex is-justify-content-end">
+                    <span class="is-size-7 mt-1 mb-4">
+                        Digite pelo menos 3 letras
+                    </span>
+                </div>
+                <div v-if="plantasEncontradas.length" class="select is-multiple">
+                    <select multiple size="7">
+                        <option
+                            v-for="planta in plantasEncontradas"
+                            :key="planta.id"
+                            :value="planta.id"
+                        >
+                            {{ planta.nome }}
+                        </option>
+                    </select>
+                </div>
+                <span v-else-if="mensagemErro" class="has-text-danger is-size-7">
+                    {{ mensagemErro }}
+                </span>
+            </div>
+            <div class="is-flex is-justify-content-space-between mt-4">
+                <button class="button mr-2" @click="closeModalProcurar">Cancelar</button>
+                <button class="button is-primary ml-2" @click="procurarPlanta">Confirmar</button>
+            </div>
+            </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close" @click="closeModalProcurar"></button>
+    </div>
+
     <Menu />
 
     <div class="container mt-3 pb-6">
         <div class="columns is-4">
             <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalVerPlanta(123)">
+                @click="openModalVerPublicacao(123)">
                 <img src="@/assets/images/image_8.png" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
@@ -304,13 +425,14 @@
         }
     }
 
-    .btn-conversar, .card-planta .local {
+    .btn-conversar, .btn-cadastrar, .card-planta .local {
         background-color: var(--verde-secundario);
         text-align: center;
         border-radius: 7px;
         font-size: smaller;
         min-width: 65%;
         color: #fff;
+        cursor: pointer;
     }
     
     .box {
@@ -319,5 +441,93 @@
 
     .modal-content {
         width: fit-content;
+    }
+
+    .container-foto div {
+        background-color: var(--verde-claro);
+        color: var(--cor-principal);
+        height: 270px;
+        width: 270px;
+    }
+
+    .label-imagem {
+        color: var(--verde-secundario);
+        position: relative;
+        top: -22px;
+        left: 5px;
+    }
+
+    .btn-nome-planta {
+        border: 1px solid var(--verde-secundario);
+        color: var(--verde-secundario);
+        padding: 5px 10px;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+    #quatidade-mudas {
+        border: 1px solid var(--verde-secundario);
+        border-radius: 5px;
+        padding: 5px 10px;
+        width: 100px;
+
+        &:focus {
+            border: 1px solid var(--verde-secundario);
+            outline: none;
+        }
+    }
+
+    #modalProcurarPlanta .box {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 470px;
+        width: 400px;
+    }
+
+    .imagem-planta {
+        min-width: 270px;
+        max-width: 270px;
+        min-height: 270px;
+        max-height: 270px;
+    }
+
+    .campo-pesquisa {
+        display: flex;
+        align-items: center;
+        border-radius: 20px;
+        border: 1px solid var(--preto);
+
+        input {
+            width: -webkit-fill-available;
+            font-weight: 600;
+            border: none;
+
+            &:focus {
+                outline: none;
+            }
+        }
+    }
+
+    .select {
+        width: -webkit-fill-available;
+
+        select {
+            width: 100%;
+
+            &:focus {
+                outline: none;
+                border: none;
+            }
+        }
+
+        select::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        select::-webkit-scrollbar-thumb {
+            background-color: hsla(171deg, 100%, 41%,1); /* cor do botão de rolagem */
+            border-radius: 13px;
+        }
     }
 </style>
