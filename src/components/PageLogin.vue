@@ -73,8 +73,10 @@
                 <button class="btn-cor-principal mt-6 p-2" type="submit">
                     Entrar
                 </button>
-                <p v-if="erro" class="help is-danger">{{ erro }}</p>
-                <div class="is-flex is-align-items-center is-justify-content-center mt-2">
+                <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center">
+                    <span v-if="erro" class="help is-danger">
+                        {{ erro }}
+                    </span>
                     <router-link to="/criar_conta" class="is-size-7 p-2 mt-2">
                         Não tenho uma conta
                     </router-link>

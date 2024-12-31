@@ -3,6 +3,7 @@
     import ModalMensagem from '../components/ModalMensagem.vue'
     import Menu from '../components/menuSuperior.vue'
     import RodaPe from '../components/RodaPe.vue'
+    import { useAuthStore } from "@/stores/auth";
     import axios from "axios";
 
     export default {
@@ -11,46 +12,74 @@
             Menu,
             RodaPe
         },
+        setup() {
+            const authStore = useAuthStore();
+            return { authStore };
+        },
         data() {
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
+                urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
                 showModal: false,
                 tituloModal: "",
                 conteudoModal: "",
-                showModalCadastrarPlanta: false,
+                showModalCadastrarPublicacao: false,
                 showModalVerPlanta: false,
                 showModalProcurar: false,
                 fotoCarregada: false,
                 fotoPreview: null,
                 plantaClicada: {},
                 plantasEncontradas: [],
+                idPlantaBuscada: null,
+                plantaBuscada: {},
                 mensagemErro: "",
+                nomePlantaProcurar: "",
+                mostrarSelectPlanta: false,
             };
         },
         methods: {
             closeModal() {
-                this.showModalCadastrarPlanta = false;
                 this.showModalVerPlanta = false;
-                this.showModalMensagem = false;
-                this.fotoCarregada = false;
+                this.showModal = false;
             },
-            openModalCadastrarPlanta() {
-                this.showModalCadastrarPlanta = true;
+            closeModalCadastrarPublicacao() {
+                this.showModalCadastrarPublicacao = false;
+                this.fotoCarregada = false;
+                this.plantaBuscada = {};
+            },
+            openModalCadastrarPublicacao() {
+                this.showModalCadastrarPublicacao = true;
             },
             abrirModalProcurar() {
                 this.showModalProcurar = true;
             },
             closeModalProcurar() {
                 this.showModalProcurar = false;
+                // this.nomePlantaProcurar = "";
             },
-            // verificarInputPesquisa() {
-            //     if (this.nomePlantaProcurar.length < 3) {
-            //         this.mensagemErro = "Digite pelo menos 3 letras.";
-            //         this.plantasEncontradas = [];
-            //     } else {
-            //         this.mensagemErro = "";
-            //     }
-            // },
+            confirmarPlanta() {
+                if (!this.idPlantaBuscada) {
+                    this.mensagemErro = 'Por favor, selecione uma planta.';
+                    return;
+                }
+
+                const planta = this.plantasEncontradas.find(
+                    (p) => p.id === this.idPlantaBuscada[0]
+                );
+
+                if (planta) {
+                    this.plantaBuscada = {
+                        id: planta.id,
+                        nome_popular: planta.nome,
+                        nome_cientifico: planta.nome_cientifico,
+                    };
+
+                    this.closeModalProcurar();
+                } else {
+                    console.error('Nenhuma planta foi selecionada.');
+                    this.mensagemErro = 'Por favor, selecione uma planta.';
+                }
+            },
             async buscarPlantas() {
                 if (this.nomePlantaProcurar.length < 3) {
                     this.mensagemErro = "Digite pelo menos 3 letras.";
@@ -88,6 +117,39 @@
             },
             abrirInputFoto() {
                 document.getElementById("input-foto").click()
+            },
+            async cadastrarPublicacao() {
+                let dados = {
+                    usuario_id: this.authStore.cod_usuario,
+                    planta_id: this.plantaBuscada.id,
+                    imagem: document.getElementById('foto-preview').src,
+                    quantidade: document.getElementById('quatidade-mudas').value
+                }
+
+                try {
+                    const response = await axios.post(this.urlCadastrarPublicacao, dados, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    if (response.status === 200) {
+                        this.closeModalCadastrarPublicacao();
+
+                        this.tituloModal = "Sucesso";
+                        this.conteudoModal = "Planta cadastrada com sucesso!";
+                        this.showModal = true;
+                    } else {
+                        this.tituloModal = "Erro";
+                        this.conteudoModal = "Erro ao cadastrar planta. Tente novamente.";
+                        this.showModal = true;
+                    }
+                } catch (error) {
+                    console.error("Erro ao cadastrar planta:", error);
+                    this.tituloModal = "Erro";
+                    this.conteudoModal = "Erro ao cadastrar planta. Tente novamente.";
+                    this.showModal = true;
+                }
             },
             async openModalVerPublicacao(plantaId) {
                 this.showModalVerPlanta = true;
@@ -148,12 +210,13 @@
     </div>
 
     <!-- Modal de Cadastrar Planta -->
-    <div v-if="showModalCadastrarPlanta" class="modal is-active">
-        <div class="modal-background" @click="closeModal"></div>
+    <div v-if="showModalCadastrarPublicacao" class="modal is-active">
+        <div class="modal-background" @click="closeModalCadastrarPublicacao"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
                 <div class="is-flex is-flex-direction-column is-justify-align-items-center">
                     <div class="container-foto is-clickable" @click="abrirInputFoto()">
+
                         <!-- Slot-foto: Aparece apenas se não houver uma imagem carregada -->
                         <div
                             id="slot-foto" 
@@ -182,11 +245,19 @@
                         />
 
                         <span class="label-imagem is-size-7">
-                            click para adicionar a foto
+                            click para adicionar uma foto
                         </span>
                     </div>
                 </div>
-                <div class="is-flex is-justify-content-space-between is-align-items-center pb-2">
+                <div v-if="this.plantaBuscada" class="is-flex is-flex-direction-column">
+                    <span class="has-text-centered has-text-weight-bold is-size-6">
+                        {{ plantaBuscada.nome_popular }}
+                    </span>
+                    <span class="has-text-centered is-size-7 pt-1 pb-3">
+                        {{ plantaBuscada.nome_cientifico }}
+                    </span>
+                </div>
+                <div class="is-flex is-justify-content-space-between is-align-items-center pb-1">
                     <label for="nome-planta" class="text-nowrap">
                         Nome da planta:
                     </label>
@@ -196,17 +267,17 @@
                     </button>
                 </div>
                 <div class="is-flex is-justify-content-space-between is-align-items-center py-2">
-                    <label for="quatidade-mudas" class="text-nowrap">
-                        Quantas de mudas?
+                    <label for="quatidade-mudas" class="text-nowrap mr-2">
+                        Quantas mudas?
                     </label>
                     <input id="quatidade-mudas" type="number" min="0">
                 </div>
-                <div class="btn-cadastrar is-flex is-justify-content-center mt-5 py-3">
+                <div class="btn-cadastrar is-flex is-justify-content-center mt-4 py-3" @click="cadastrarPublicacao">
                     Cadastrar
                 </div>
             </div>
         </div>
-        <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
+        <button class="modal-close is-large" aria-label="close" @click="closeModalCadastrarPublicacao"></button>
     </div>
 
     <!-- Modal de Procurar Planta -->
@@ -214,48 +285,46 @@
         <div class="modal-background" @click="closeModalProcurar"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
-            <div class="field">
-                <label for="procurar-planta" class="label mb-3">
-                    Nome da planta:
-                </label>
-                <div class="campo-pesquisa px-4 py-2">
-                    <input
-                        id="procurar-planta"
-                        v-model="nomePlantaProcurar"
-                        placeholder="Digite o nome da planta"
-                    />
-                    <!-- <input
-                        id="procurar-planta"
-                        @input="verificarInputPesquisa"
-                        v-model="nomePlantaProcurar"
-                        placeholder="Digite o nome da planta"
-                    /> -->
-                    <i class="bi bi-search is-clickable" @click="buscarPlantas"></i>
-                </div>
-                <div class="is-flex is-justify-content-end">
-                    <span class="is-size-7 mt-1 mb-4">
-                        Digite pelo menos 3 letras
+                <div class="field">
+                    <label for="procurar-planta" class="label mb-3">
+                        Nome da planta:
+                    </label>
+                    <div class="campo-pesquisa px-4 py-2">
+                        <input
+                            id="procurar-planta"
+                            v-model="nomePlantaProcurar"
+                            placeholder="Digite o nome da planta"
+                        />
+                        <i class="bi bi-search is-clickable" @click="buscarPlantas"></i>
+                    </div>
+                    <div class="is-flex is-justify-content-end">
+                        <span class="is-size-7 mt-1 mb-4">
+                            Digite pelo menos 3 letras
+                        </span>
+                    </div>
+                    <div v-if="plantasEncontradas.length" class="select is-multiple">
+                        <select id="select-planta" v-model="idPlantaBuscada" multiple size="7">
+                            <option
+                                v-for="planta in plantasEncontradas"
+                                :key="planta.id"
+                                :value="planta.id"
+                            >
+                                {{ planta.nome }}
+                            </option>
+                        </select>
+                    </div>
+                    <span v-else-if="mensagemErro" class="has-text-danger is-size-7">
+                        {{ mensagemErro }}
                     </span>
                 </div>
-                <div v-if="plantasEncontradas.length" class="select is-multiple">
-                    <select multiple size="7">
-                        <option
-                            v-for="planta in plantasEncontradas"
-                            :key="planta.id"
-                            :value="planta.id"
-                        >
-                            {{ planta.nome }}
-                        </option>
-                    </select>
+                <div class="is-flex is-justify-content-space-between mt-4">
+                    <button class="button mr-2" @click="closeModalProcurar">
+                        Cancelar
+                    </button>
+                    <button class="button is-primary ml-2" @click="confirmarPlanta">
+                        Confirmar
+                    </button>
                 </div>
-                <span v-else-if="mensagemErro" class="has-text-danger is-size-7">
-                    {{ mensagemErro }}
-                </span>
-            </div>
-            <div class="is-flex is-justify-content-space-between mt-4">
-                <button class="button mr-2" @click="closeModalProcurar">Cancelar</button>
-                <button class="button is-primary ml-2" @click="procurarPlanta">Confirmar</button>
-            </div>
             </div>
         </div>
         <button class="modal-close is-large" aria-label="close" @click="closeModalProcurar"></button>
@@ -284,7 +353,7 @@
                 </span>
             </div>
             <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalCadastrarPlanta()">
+                @click="openModalCadastrarPublicacao()">
                 <img src="@/assets/images/image_8.png" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
@@ -453,8 +522,8 @@
     .label-imagem {
         color: var(--verde-secundario);
         position: relative;
-        top: -22px;
-        left: 5px;
+        top: -21px;
+        left: 6px;
     }
 
     .btn-nome-planta {
