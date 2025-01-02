@@ -1,8 +1,13 @@
 <script>
     import axios from "axios";
+    import { useRouter } from "vue-router";
     import Modal from './ModalMensagem.vue';
 
     export default {
+        setup() {
+            const router = useRouter();
+            return { router };
+        },
         components: {
             Modal,
         },
@@ -33,10 +38,8 @@
         },
         methods: {
             verificarCamposObrigatorios(camposObrigatorios, formData) {
-                console.log("Dados do formulário:", formData);
                 return camposObrigatorios.every(campo => {
                     const valor = formData[campo]?.trim();
-                    console.log(`Campo ${campo}:`, valor);
                     return valor !== "" && valor !== undefined && valor !== null;
                 });
             },
@@ -95,6 +98,11 @@
                     this.titleModal = "Sucesso!";
                     this.contentModal = "Cadastro realizado com sucesso.";
                     this.showModal = true;
+
+                    setTimeout(() => {
+                        this.router.push({ name: "login" });
+                    }, 2000);
+                    
                 } catch (error) {
                     this.titleModal = "Erro!";
                     this.contentModal =

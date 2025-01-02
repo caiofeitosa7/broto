@@ -20,6 +20,7 @@ export const useAuthStore = defineStore("auth", {
         logout() {
             this.cod_usuario = null;
             this.nome_usuario = null;
+            this.autenticado = false;
         },
     },
     persist: {

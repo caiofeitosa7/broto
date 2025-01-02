@@ -20,9 +20,15 @@
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
+                urlCategorias: 'http://localhost:5000/categorias',
                 showModal: false,
                 tituloModal: "",
                 conteudoModal: "",
+                categorias: [],
+                visibleCategories: [],
+                itemsPerPage: 0,
+                currentIndex: 0,
+
                 showModalCadastrarPublicacao: false,
                 showModalVerPlanta: false,
                 showModalProcurar: false,
@@ -57,6 +63,66 @@
                 this.showModalProcurar = false;
                 // this.nomePlantaProcurar = "";
             },
+            async getCategorias() {
+                try {
+                    const response = await fetch(this.urlCategorias);
+
+                    if (!response.ok) {
+                        throw new Error("Erro ao buscar as espécies");
+                    }
+
+                    this.categorias = await response.json().then((data) => data.map((item) => item.nome));
+                    this.updateItemsPerPage();
+                } catch (error) {
+                    console.error("Erro ao buscar espécies:", error);
+                }
+            },
+
+
+
+
+
+
+
+
+
+
+            updateItemsPerPage() {
+                const containerWidth = document.querySelector(".container-categorias").offsetWidth;
+                this.itemsPerPage = Math.floor(containerWidth / 100);
+                this.visibleCategories = this.categorias.slice(
+                    this.currentIndex,
+                    this.currentIndex + this.itemsPerPage
+                );
+            },
+            scrollLeft() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    this.updateItemsPerPage();
+                }
+            },
+            scrollRight() {
+                if (this.currentIndex + this.itemsPerPage < this.categorias.length) {
+                    this.currentIndex++;
+                    this.updateItemsPerPage();
+                }
+            },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             confirmarPlanta() {
                 if (!this.idPlantaBuscada) {
                     this.mensagemErro = 'Por favor, selecione uma planta.';
@@ -137,17 +203,17 @@
                         this.closeModalCadastrarPublicacao();
 
                         this.tituloModal = "Sucesso";
-                        this.conteudoModal = "Planta cadastrada com sucesso!";
+                        this.conteudoModal = "Publicação cadastrada com sucesso!";
                         this.showModal = true;
                     } else {
                         this.tituloModal = "Erro";
-                        this.conteudoModal = "Erro ao cadastrar planta. Tente novamente.";
+                        this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
                         this.showModal = true;
                     }
                 } catch (error) {
                     console.error("Erro ao cadastrar planta:", error);
                     this.tituloModal = "Erro";
-                    this.conteudoModal = "Erro ao cadastrar planta. Tente novamente.";
+                    this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
                     this.showModal = true;
                 }
             },
@@ -171,7 +237,14 @@
                     this.plantaClicada = { nomeComum: "Erro ao carregar dados" };
                 }
             },
-        }
+        },
+        mounted() {
+            this.getCategorias();
+            window.addEventListener("resize", this.updateItemsPerPage);
+        },
+        beforeUnmount() {
+            window.removeEventListener("resize", this.updateItemsPerPage);
+        },
     };
 </script>
 
@@ -332,6 +405,56 @@
 
     <Menu />
 
+    <div>
+        <div class="banner">
+            <h2 class="has-text-white is-size-4 px-3">
+                DOE MUDAS, SEMEIE O FUTURO.
+            </h2>
+        </div>
+        <ul class="nav-especies py-4 px-2">
+            <div class="container container-categorias is-flex is-justify-content-space-between is-align-items-center">
+                <i class="bi bi-chevron-left is-size-5 is-clickable pr-1" @click="scrollLeft"></i>
+                <li v-for="(categoria, index) in this.visibleCategories" :key="index">
+                    {{ categoria }}
+                </li>
+                <i class="bi bi-chevron-right is-size-5 is-clickable pl-1" @click="scrollRight"></i>
+            </div>
+        </ul>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <div class="container mt-3 pb-6">
         <div class="columns is-4">
             <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
@@ -480,6 +603,44 @@
 </template>
 
 <style scoped>
+    .banner {
+        background-image: url('@/assets/images/banner_inicio2.jpg');
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 180px;
+
+        h2 {
+            font-family: "Aboreto", system-ui;
+            line-height: normal;
+        }
+    }
+
+    .container-categorias {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        width: 100%;
+        gap: 10px;
+    }
+
+    .nav-especies {
+        background-color: #f3f3f3;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+        li {
+            border-bottom: 3px solid #81b5b0;
+            list-style: none;
+            text-align: center;
+            padding-bottom: 3px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: smaller;
+        }
+    }
+
     .card-planta {
         div {
             width: 100%;
@@ -597,6 +758,12 @@
         select::-webkit-scrollbar-thumb {
             background-color: hsla(171deg, 100%, 41%,1); /* cor do botão de rolagem */
             border-radius: 13px;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .nav-especies li {
+            font-size: smaller;
         }
     }
 </style>
