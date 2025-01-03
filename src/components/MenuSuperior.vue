@@ -16,6 +16,7 @@
         data() {
             return {
                 urlLogout: "http://localhost:5000/logout",
+                menuVisivel: false,
             }
         },
         methods: {
@@ -27,6 +28,9 @@
                 } catch (error) {
                     console.error("Erro ao verificar o usuário:", error);
                 }
+            },
+            toggleMenu() {
+                this.menuVisivel = !this.menuVisivel;
             },
         }
     };
@@ -43,7 +47,7 @@
                 <i class="bi bi-search is-clickable"></i>
             </div>
         </div>
-        <div class="is-flex is-align-items-center">
+        <div id="menu-desktop" class="is-flex is-align-items-center">
             <router-link v-if="!this.authStore.autenticado" class="is-size-7 mr-4" to="/login">
                 Entrar
             </router-link>
@@ -60,10 +64,38 @@
                 <i class="bi bi-person-fill"></i>
             </router-link>
         </div>
+        <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png" alt="Menu">
     </nav>
+    <div v-if="menuVisivel" id="menu-mobile" class="is-flex is-align-items-center is-justify-content-center pt-4">
+        <ul>
+            <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'banner-frase' }">
+                <a @click="scrollToSection('banner-frase')">HOME</a>
+            </li>
+            <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-sobre-nos' }">
+                <a @click="scrollToSection('container-sobre-nos')">SOBRE</a>
+            </li>
+            <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-projetos' }">
+                <a @click="scrollToSection('container-projetos')">PROJETOS</a>
+            </li>
+            <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-noticias' }">
+                <a @click="scrollToSection('container-noticias')">NOTÍCIAS</a>
+            </li>
+            <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-contato' }">
+                <a @click="scrollToSection('container-contato')">CONTATO</a>
+            </li>
+        </ul>
+    </div>
 </template>
 
 <style scoped>
+    nav.container {
+        position: sticky;
+        top: 0; /* Fixa o elemento no topo ao rolar */
+        z-index: 10; /* Garante que o elemento esteja acima de outros */
+        background-color: white; /* Evita sobreposição transparente */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: adiciona um efeito de sombra */
+    }
+
     .logo div:first-child {
         border-radius: 50%;
         height: 35px;
@@ -92,6 +124,50 @@
             &:focus {
                 outline: none;
             }
+        }
+    }
+
+    #menu-mobile {
+        top: 48px;
+        z-index: 2;
+        position: sticky;
+        background-color: #fff;
+    }
+
+    #menu-mobile li {
+        text-align: center;
+        margin-bottom: 17px;
+    }
+
+    #icone-menu {
+        max-width: 25px;
+    }
+
+    @media screen and (min-width: 769px) {
+        #icone-menu{
+            display: none !important;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        #menu-desktop{
+            display: none !important;
+        }
+    }
+
+    @media screen and (min-width: 371px) {
+        #pesquisa{
+            max-width: auto;
+        }
+    }
+
+    @media screen and (max-width: 370px) {
+        .container-pesquisar {
+            width: auto;
+        }
+
+        #pesquisa{
+            max-width: 130px;
         }
     }
 

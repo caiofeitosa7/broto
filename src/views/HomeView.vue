@@ -77,16 +77,6 @@
                     console.error("Erro ao buscar espécies:", error);
                 }
             },
-
-
-
-
-
-
-
-
-
-
             updateItemsPerPage() {
                 const containerWidth = document.querySelector(".container-categorias").offsetWidth;
                 this.itemsPerPage = Math.floor(containerWidth / 100);
@@ -107,22 +97,6 @@
                     this.updateItemsPerPage();
                 }
             },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             confirmarPlanta() {
                 if (!this.idPlantaBuscada) {
                     this.mensagemErro = 'Por favor, selecione uma planta.';
@@ -417,44 +391,10 @@
                 <li v-for="(categoria, index) in this.visibleCategories" :key="index">
                     {{ categoria }}
                 </li>
-                <i class="bi bi-chevron-right is-size-5 is-clickable pl-1" @click="scrollRight"></i>
+                <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
             </div>
         </ul>
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     <div class="container mt-3 pb-6">
         <div class="columns is-4">
             <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
@@ -637,7 +577,6 @@
             padding-bottom: 3px;
             font-weight: 500;
             cursor: pointer;
-            font-size: smaller;
         }
     }
 
@@ -764,6 +703,12 @@
     @media screen and (max-width: 768px) {
         .nav-especies li {
             font-size: smaller;
+        }
+    }
+
+    @media screen and (max-width: 500px) {
+        .banner h2 {
+            font-size: medium !important;
         }
     }
 </style>
