@@ -56,7 +56,9 @@
     <nav>
         <div class="container is-flex is-justify-content-space-between is-align-items-center px-3 py-2">
             <div class="logo">
-                <div></div>
+                <router-link to="/">
+                    <div></div>
+                </router-link>
             </div>
             <div class="px-5 container-pesquisar">
                 <div class="campo-input px-4 py-2">
@@ -87,36 +89,27 @@
                     <!-- Menu flutuante -->
                     <div v-show="showDropdown" class="menu-dropdown">
                         <ul class="is-size-6">
-                            <li><router-link to="/perfil">Perfil</router-link></li>
-                            <li><router-link to="/configuracoes">Publicações</router-link></li>
+                            <router-link to="/perfil">
+                                <li>Perfil</li>
+                            </router-link>
+                            <router-link to="/configuracoes">
+                                <li>Publicações</li>
+                            </router-link>
                             <!-- <li v-if="authStore.autenticado" @click="logout">Sair</li> -->
                         </ul>
                     </div>
                 </div>
-
             </div>
             <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png" alt="Menu">
         </div>
         <div v-if="menuVisivel" id="menu-mobile" class="is-flex is-align-items-center is-justify-content-center pt-4">
             <ul>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'banner-frase' }">
-                    <a @click="scrollToSection('banner-frase')">HOME</a>
-                </li>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-sobre-nos' }">
-                    <a @click="scrollToSection('container-sobre-nos')">FAVORITOS</a>
-                </li>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-projetos' }">
-                    <a @click="scrollToSection('container-projetos')">PUBLICAÇÕES</a>
-                </li>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-noticias' }">
-                    <a @click="scrollToSection('container-noticias')">PERFIL</a>
-                </li>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-contato' }">
-                    <a @click="scrollToSection('container-contato')">CHAT</a>
-                </li>
-                <li class="is-clickable" :class="{ 'menu-selecionado': secaoAtiva === 'container-contato' }">
-                    <a @click="scrollToSection('container-contato')">SAIR</a>
-                </li>
+                <li class="is-clickable">HOME</li>
+                <li class="is-clickable">FAVORITOS</li>
+                <li class="is-clickable">PUBLICAÇÕES</li>
+                <li class="is-clickable">PERFIL</li>
+                <li class="is-clickable">CHAT</li>
+                <li class="is-clickable" v-if="this.authStore.autenticado" @click="logout">SAIR</li>
             </ul>
         </div>
     </nav>
