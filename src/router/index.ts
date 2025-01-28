@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue';
 import LoginPage from '../components/PageLogin.vue';
 import PerfilPage from '../components/PagePerfil.vue';
+import PublicacoesView from '../views/PublicacoesView.vue';
 import CriarContaPage from '../components/PageCriarConta.vue';
 
 const router = createRouter({
@@ -27,6 +28,11 @@ const router = createRouter({
       path: '/perfil',
       name: 'perfil',
       component: PerfilPage
+    },
+    {
+      path: '/minhas_publicacoes',
+      name: 'minhas_publicacoes',
+      component: PublicacoesView
     },
   ]
 })

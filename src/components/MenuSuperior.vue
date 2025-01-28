@@ -98,7 +98,7 @@
                             <router-link to="/perfil">
                                 <li>Perfil</li>
                             </router-link>
-                            <router-link to="/configuracoes">
+                            <router-link to="/minhas_publicacoes">
                                 <li>Publicações</li>
                             </router-link>
                             <li v-if="authStore.autenticado" @click="logout">
@@ -223,13 +223,13 @@
         }
     }
 
-    @media screen and (min-width: 371px) {
+    @media screen and (min-width: 421px) {
         #pesquisa{
             max-width: auto;
         }
     }
 
-    @media screen and (max-width: 370px) {
+    @media screen and (max-width: 420px) {
         .container-pesquisar {
             width: auto;
         }
