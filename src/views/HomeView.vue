@@ -417,7 +417,7 @@
                 <li v-for="(categoria, index) in this.visibleCategories" :key="index">
                     {{ categoria }}
                 </li>
-                <i class="bi bi-chevron-right is-size-5 is-clickable pl-1" @click="scrollRight"></i>
+                <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
             </div>
         </ul>
     </div>
@@ -619,7 +619,7 @@
 
     .container-categorias {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         width: 100%;
         gap: 10px;
     }
@@ -637,7 +637,6 @@
             padding-bottom: 3px;
             font-weight: 500;
             cursor: pointer;
-            font-size: smaller;
         }
     }
 
@@ -763,7 +762,7 @@
 
     @media screen and (max-width: 768px) {
         .nav-especies li {
-            font-size: smaller;
+            font-size: small;
         }
     }
 </style>
