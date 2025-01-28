@@ -1,6 +1,6 @@
 <script>
     import { useAuthStore } from "@/stores/auth";
-    import { useRouter } from "vue-router";
+    import { RouterLink, useRouter } from "vue-router";
     import axios from "axios";
 
     export default {
@@ -18,6 +18,12 @@
                 urlLogout: "http://localhost:5000/logout",
                 showDropdown: false,
                 menuVisivel: false,
+            }
+        },
+        props: {
+            exibirPesquisa: {
+                type: Boolean,
+                default: true
             }
         },
         methods: {
@@ -60,7 +66,7 @@
                     <div></div>
                 </router-link>
             </div>
-            <div class="px-5 container-pesquisar">
+            <div v-if="exibirPesquisa" class="px-5 container-pesquisar">
                 <div class="campo-input px-4 py-2">
                     <input id="pesquisa" placeholder="Qual planta deseja?">
                     <i class="bi bi-search is-clickable"></i>
@@ -70,9 +76,9 @@
                 <router-link v-if="!this.authStore.autenticado" class="is-size-7 mr-4" to="/login">
                     Entrar
                 </router-link>
-                <span v-if="this.authStore.autenticado" class="is-size-7 is-clickable mr-4" @click="logout">
-                    Sair
-                </span>
+                <router-link v-if="this.authStore.autenticado" class="is-size-5 is-clickable mr-4" to="/">
+                    <i class="bi bi-house"></i>
+                </router-link>
                 <!-- <div class="is-clickable is-size-5 mr-4">
                     <i class="bi bi-chat-text"></i>
                 </div> -->
@@ -95,10 +101,13 @@
                             <router-link to="/configuracoes">
                                 <li>Publicações</li>
                             </router-link>
-                            <!-- <li v-if="authStore.autenticado" @click="logout">Sair</li> -->
+                            <li v-if="authStore.autenticado" @click="logout">
+                                Sair
+                            </li>
                         </ul>
                     </div>
                 </div>
+
             </div>
             <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png" alt="Menu">
         </div>

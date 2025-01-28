@@ -1,10 +1,17 @@
 <script>
+    import Menu from '../components/menuSuperior.vue'
+    import RodaPe from '../components/RodaPe.vue'
     import { useAuthStore } from "@/stores/auth";
     import { useRouter } from "vue-router";
     import Modal from './ModalMensagem.vue';
     import axios from "axios";
 
     export default {
+        components: {
+            Modal,
+            Menu,
+            RodaPe
+        },
         setup() {
             const authStore = useAuthStore();
             const router = useRouter();
@@ -14,22 +21,19 @@
                 router
             };
         },
-        components: {
-            Modal,
-        },
         data() {
             return {
-                urlAddUsuario: "http://127.0.0.1:5000/add_usuario",
-                urlVerificarUsuario: 'http://127.0.0.1:5000/verificar_usuario',
+                urlAtualizarUsuario: "http://127.0.0.1:5000//atualizar_usuario",
+                // urlVerificarUsuario: 'http://127.0.0.1:5000/verificar_usuario',
                 urlGetUsuario: 'http://127.0.0.1:5000/get_usuario/',
                 senhaVisivel: false,
                 showModal: false,
                 titleModal: "",
                 contentModal: "",
-                senha: "",
+                // senha: "",
                 // confirmacaoSenha: "",
-                senhasIguais: false,
-                usuarioExistente: false,
+                // senhasIguais: false,
+                // usuarioExistente: false,
                 dadosUsuario: {
                     nome: "",
                     email: "",
@@ -70,28 +74,27 @@
             fecharModal() {
                 this.showModal = false;
             },
-            async verificarUsuarioExistente() {
-                try {
-                    const response = await axios.get(urlVerificarUsuario, {
-                        params: { usuario: this.dadosUsuario.usuario }
-                    });
-                    this.usuarioExistente = response.data.existe;
-                } catch (error) {
-                    console.error("Erro ao verificar o usuário:", error);
-                }
-            },
+            // async verificarUsuarioExistente() {
+            //     try {
+            //         const response = await axios.get(urlVerificarUsuario, {
+            //             params: { usuario: this.dadosUsuario.usuario }
+            //         });
+            //         this.usuarioExistente = response.data.existe;
+            //     } catch (error) {
+            //         console.error("Erro ao verificar o usuário:", error);
+            //     }
+            // },
             async atualizarUsuario(event) {
                 event.preventDefault();
-                this.verificarSenhas();
 
-                this.dadosUsuario.senha = this.senha;
+                // this.dadosUsuario.senha = this.senha;
 
-                if (!this.senhasIguais) {
-                    this.titleModal = "Erro!";
-                    this.contentModal = "As senhas não coincidem.";
-                    this.showModal = true;
-                    return;
-                }
+                // if (!this.senhasIguais) {
+                //     this.titleModal = "Erro!";
+                //     this.contentModal = "As senhas não coincidem.";
+                //     this.showModal = true;
+                //     return;
+                // }
 
                 let camposObrigatorios = ['nome', 'email', 'cpf', 'usuario', 'senha'];
                 if (!this.verificarCamposObrigatorios(camposObrigatorios, this.dadosUsuario)) {
@@ -101,20 +104,19 @@
                     return;
                 }
 
-                const response = await axios.get(this.urlVerificarUsuario, {
-                    params: { usuario: this.dadosUsuario.usuario }
-                });
+                // const response = await axios.get(this.urlVerificarUsuario, {
+                //     params: { usuario: this.dadosUsuario.usuario }
+                // });
 
-                if (response.data.existe) {
-                    this.titleModal = "Erro!";
-                    this.contentModal = "Este usuário já está em uso.";
-                    this.showModal = true;
-                    return;
-                }
+                // if (response.data.existe) {
+                //     this.titleModal = "Erro!";
+                //     this.contentModal = "Este usuário já está em uso.";
+                //     this.showModal = true;
+                //     return;
+                // }
 
                 try {
-                    this.dadosUsuario.senha = this.senha;
-                    const response = await axios.post(this.urlAddUsuario, this.dadosUsuario);
+                    const response = await axios.post(this.urlAtualizarUsuario, this.dadosUsuario);
 
                     this.titleModal = "Sucesso!";
                     this.contentModal = "Atualização realizada com sucesso.";
@@ -141,6 +143,8 @@
     };
 </script>
 <template>
+    <Menu :exibirPesquisa="false" />
+
     <div class="container">
         <Modal
             :showModal="showModal"
@@ -224,10 +228,11 @@
                         <label for="usuario">
                             Usuário*
                         </label>
-                        <input id="usuario" name="usuario" class="mt-1"
+                        <input id="usuario" name="usuario" class="mt-1" v-model="dadosUsuario.usuario" disabled>
+                        <!-- <input id="usuario" name="usuario" class="mt-1"
                             v-model="dadosUsuario.usuario" @blur="verificarUsuarioExistente"
                         >
-                        <p v-if="usuarioExistente" class="help is-danger">Este usuário já existe.</p>
+                        <p v-if="usuarioExistente" class="help is-danger">Este usuário já existe.</p> -->
                     </div>
                     <div class="column is-3">
                         <label for="senha">
@@ -298,6 +303,11 @@
             &:focus {
                 outline: none;
             }
+        }
+
+        input[disabled] {
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         p:first-child {
