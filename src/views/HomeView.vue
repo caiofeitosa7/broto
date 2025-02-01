@@ -20,6 +20,7 @@
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
+                urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes',
                 urlCategorias: 'http://localhost:5000/categorias',
                 showModal: false,
                 tituloModal: "",
@@ -28,24 +29,34 @@
                 visibleCategories: [],
                 itemsPerPage: 0,
                 currentIndex: 0,
-
                 showModalCadastrarPublicacao: false,
-                showModalVerPlanta: false,
+                showModalVerPublicacao: false,
                 showModalProcurar: false,
                 fotoCarregada: false,
                 fotoPreview: null,
-                plantaClicada: {},
+                publicacaoClicada: {},
                 plantasEncontradas: [],
                 idPlantaBuscada: null,
                 plantaBuscada: {},
                 mensagemErro: "",
                 nomePlantaProcurar: "",
                 mostrarSelectPlanta: false,
+                publicacoes: [],
             };
+        },
+        computed: {
+            gruposDePlantas() {
+                return this.publicacoes.reduce((acc, publicacao, index) => {
+                    const grupoIndex = Math.floor(index / 4);
+                    if (!acc[grupoIndex]) acc[grupoIndex] = [];
+                    acc[grupoIndex].push(publicacao);
+                    return acc;
+                }, []);
+            }
         },
         methods: {
             closeModal() {
-                this.showModalVerPlanta = false;
+                this.showModalVerPublicacao = false;
                 this.showModal = false;
             },
             closeModalCadastrarPublicacao() {
@@ -62,6 +73,17 @@
             closeModalProcurar() {
                 this.showModalProcurar = false;
                 // this.nomePlantaProcurar = "";
+            },
+            async carregarPublicacoes() {
+                try {
+                    const response = await axios.get(this.urlCarregarPublicacoes);
+                    this.publicacoes = response.data;
+                    console.log(response.data);
+                } catch (error) {
+                    console.error("Erro ao carregar plantas:", error);
+                } finally {
+                    this.carregando = false;
+                }
             },
             async getCategorias() {
                 try {
@@ -191,29 +213,33 @@
                     this.showModal = true;
                 }
             },
-            async openModalVerPublicacao(plantaId) {
-                this.showModalVerPlanta = true;
+            async openModalVerPublicacao(nomeComum, nomeCientifico, local, quantidade, foto) {
+                this.showModalVerPublicacao = true;
 
-                try {
+                // console.log(plublicacao);
+
+                // try {
                     // const response = await fetch(`https://api.example.com/plants/${plantaId}`);
                     // if (!response.ok) throw new Error("Erro ao buscar dados da planta");
-                    // this.plantaClicada = await response.json();
+                    // this.publicacaoClicada = await response.json();
 
-                    this.plantaClicada = {
-                        'nomeComum': 'Jiboia',
-                        'nomeCientifico': 'Abc',
-                        'local': 'Prefeitura',
-                        'quantidade': 3
-                    }
-
-                } catch (error) {
-                    console.error("Erro ao carregar dados:", error);
-                    this.plantaClicada = { nomeComum: "Erro ao carregar dados" };
+                this.publicacaoClicada = {
+                    'nomeComum': nomeComum,
+                    'nomeCientifico': nomeCientifico,
+                    'local': local,
+                    'quantidade': quantidade,
+                    'foto': foto
                 }
+
+                // } catch (error) {
+                //     console.error("Erro ao carregar dados:", error);
+                //     this.publicacaoClicada = { nomeComum: "Erro ao carregar dados" };
+                // }
             },
         },
         mounted() {
             this.getCategorias();
+            this.carregarPublicacoes();
             window.addEventListener("resize", this.updateItemsPerPage);
         },
         beforeUnmount() {
@@ -226,27 +252,27 @@
     <ModalMensagem :showModal="showModal" :titleModal="tituloModal" :contentModal="conteudoModal" @close="closeModal"/>
 
     <!-- Modal de Visualizar Planta -->
-    <div v-if="showModalVerPlanta" class="modal is-active">
+    <div v-if="showModalVerPublicacao" class="modal is-active">
         <div class="modal-background" @click="closeModal"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
                 <div class="is-flex is-flex-direction-column is-justify-align-items-center">
-                    <img class="imagem-planta" src="@/assets/images/image_8.png" alt="foto da planta">
-                    <p class="has-text-centered has-text-weight-medium is-size-4 pt-3">
-                        {{ plantaClicada.nomeComum || 'Carregando...' }}
+                    <img class="imagem-planta" :src=publicacaoClicada.foto alt="foto da planta">
+                    <p class="has-text-centered has-text-weight-medium is-size-6 pt-3">
+                        {{ publicacaoClicada.nomeComum || 'Carregando...' }}
                     </p>
                     <p class="has-text-centered is-size-7 pt-1 pb-3">
-                        {{ plantaClicada.nomeCientifico }}
+                        {{ publicacaoClicada.nomeCientifico }}
                     </p>
                 </div>
                 <p>
-                    <strong>Dono(a):</strong> {{ plantaClicada.nomeCientifico }}
+                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeCientifico }}
                 </p>
                 <p class="py-2">
-                    <strong>Localidade:</strong> {{ plantaClicada.local }}
+                    <strong>Localidade:</strong> {{ publicacaoClicada.local }}
                 </p>
                 <p>
-                    <strong>Quantidade:</strong> {{ plantaClicada.quantidade }}
+                    <strong>Quantidade:</strong> {{ publicacaoClicada.quantidade }}
                 </p>
                 <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
                     Conversar
@@ -389,152 +415,69 @@
             <div class="container container-categorias is-flex is-justify-content-space-between is-align-items-center">
                 <i class="bi bi-chevron-left is-size-5 is-clickable pr-1" @click="scrollLeft"></i>
                 <li v-for="(categoria, index) in this.visibleCategories" :key="index">
-                    {{ categoria }}
+                    <span @click="fetchPublicacoes(categoria)">
+                        {{ categoria }}
+                    </span>
                 </li>
                 <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
             </div>
         </ul>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <div class="container mt-3 pb-6">
-        <div class="columns is-4">
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalVerPublicacao(123)">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
+        <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
+            <div 
+                v-for="(publicacao, i) in grupo" :key="i" 
+                class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
+                @click="openModalVerPublicacao(
+                    publicacao.planta.nome_popular,
+                    publicacao.planta.nome_cientifico, 
+                    publicacao.usuario.bairro,
+                    publicacao.quantidade,
+                    publicacao.foto.imagem_base64
+                )"
+            >
+                <img :src=publicacao.foto.imagem_base64 class="foto-publicacao" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
+                        <span class="nome-comum is-size-6 has-text-weight-bold">
+                            {{ publicacao.planta.nome_popular }}
                         </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalCadastrarPublicacao()">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
+                        <span class="nome-cientifico">
+                            {{ publicacao.planta.nome_cientifico }}
                         </span>
                     </div>
-                    <i class="bi bi-heart-fill is-size-5 is-clickable"></i>
+                    <i 
+                        :class="['bi', publicacao.favorita ? 'bi-heart-fill' : 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        @click.stop="toggleFavorito(publicacao)"
+                    ></i>
                 </div>
                 <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-        </div>
-        <div class="columns is-4">
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
+                    {{ publicacao.usuario.bairro }}
                 </span>
             </div>
         </div>
@@ -578,9 +521,15 @@
             font-weight: 500;
             cursor: pointer;
         }
+
+        span:hover {
+            color: var(--verde-secundario);
+        }
     }
 
     .card-planta {
+        line-height: normal;
+
         div {
             width: 100%;
         }
@@ -700,9 +649,26 @@
         }
     }
 
+    /* .foto-publicacao {
+        width: 250px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 3px;
+    } */
+
     @media screen and (max-width: 768px) {
         .nav-especies li {
             font-size: small;
+        }
+
+        .card-planta {
+            max-width: 330px;
+        }
+
+        .columns {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
     }
 

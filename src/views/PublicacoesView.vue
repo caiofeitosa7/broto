@@ -20,6 +20,7 @@
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
+                urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes_usuario',
                 urlCategorias: 'http://localhost:5000/categorias',
                 showModal: false,
                 tituloModal: "",
@@ -28,7 +29,6 @@
                 visibleCategories: [],
                 itemsPerPage: 0,
                 currentIndex: 0,
-
                 showModalCadastrarPublicacao: false,
                 showModalVerPlanta: false,
                 showModalProcurar: false,
@@ -41,7 +41,18 @@
                 mensagemErro: "",
                 nomePlantaProcurar: "",
                 mostrarSelectPlanta: false,
+                publicacoes: [],
             };
+        },
+        computed: {
+            gruposDePlantas() {
+                return this.publicacoes.reduce((acc, publicacao, index) => {
+                    const grupoIndex = Math.floor(index / 4);
+                    if (!acc[grupoIndex]) acc[grupoIndex] = [];
+                    acc[grupoIndex].push(publicacao);
+                    return acc;
+                }, []);
+            }
         },
         methods: {
             closeModal() {
@@ -63,39 +74,41 @@
                 this.showModalProcurar = false;
                 // this.nomePlantaProcurar = "";
             },
-            async getCategorias() {
-                try {
-                    const response = await fetch(this.urlCategorias);
 
-                    if (!response.ok) {
-                        throw new Error("Erro ao buscar as espécies");
-                    }
 
-                    this.categorias = await response.json().then((data) => data.map((item) => item.nome));
-                    this.updateItemsPerPage();
-                } catch (error) {
-                    console.error("Erro ao buscar espécies:", error);
-                }
-            },
-            updateItemsPerPage() {
-                const containerWidth = document.querySelector(".container-categorias").offsetWidth;
-                this.itemsPerPage = Math.floor(containerWidth / 100);
-                this.visibleCategories = this.categorias.slice(
-                    this.currentIndex,
-                    this.currentIndex + this.itemsPerPage
-                );
-            },
-            scrollLeft() {
-                if (this.currentIndex > 0) {
-                    this.currentIndex -= 2;
-                    this.updateItemsPerPage();
-                }
-            },
-            scrollRight() {
-                if (this.currentIndex + this.itemsPerPage < this.categorias.length) {
-                    this.currentIndex += 2;
-                    this.updateItemsPerPage();
-                }
+
+
+
+
+
+
+
+
+
+
+
+            async carregarPublicacoes() {
+                // try {
+                    let usuario_id = this.authStore.cod_usuario;
+                    console.log(this.urlCarregarPublicacoes + '/' + usuario_id);
+                    const response = await axios.get(this.urlCarregarPublicacoes + '/' + usuario_id);
+                    // this.publicacoes = [
+                    //     { id: 1, nome_comum: "Jiboia", nome_cientifico: "Epipremnum pinnatum", local: "Lorival Parente", favorita: false, imagem: '@/assets/images/image_8.png' },
+                    //     { id: 2, nome_comum: "Espada-de-São-Jorge", nome_cientifico: "Sansevieria trifasciata", local: "Centro", favorita: true, imagem: '@/assets/images/image_8.png' },
+                    //     { id: 3, nome_comum: "Costela-de-Adão", nome_cientifico: "Monstera deliciosa", local: "Boa Vista", favorita: false, imagem: '@/assets/images/image_8.png' },
+                    //     { id: 4, nome_comum: "Samambaia", nome_cientifico: "Nephrolepis exaltata", local: "Macaúba", favorita: false, imagem: '@/assets/images/image_8.png' },
+                    //     { id: 5, nome_comum: "Ficus", nome_cientifico: "Ficus benjamina", local: "Centro", favorita: false, imagem: '@/assets/images/image_8.png' },
+                    //     { id: 6, nome_comum: "Cacto", nome_cientifico: "Cactaceae", local: "Vermelha", favorita: true, imagem: '@/assets/images/image_8.png' },
+                    // ];
+
+                    console.log(response.data);
+
+                    this.publicacoes = response.data;
+                // } catch (error) {
+                //     console.error("Erro ao carregar plantas:", error);
+                // } finally {
+                //     this.carregando = false;
+                // }
             },
             confirmarPlanta() {
                 if (!this.idPlantaBuscada) {
@@ -213,7 +226,7 @@
             },
         },
         mounted() {
-            this.getCategorias();
+            this.carregarPublicacoes();
             window.addEventListener("resize", this.updateItemsPerPage);
         },
         beforeUnmount() {
@@ -377,170 +390,82 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModalProcurar"></button>
     </div>
 
-    <Menu />
+    <Menu :exibirPesquisa="false" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <div>
         <div class="banner">
             <h2 class="has-text-white is-size-4 px-3">
-                DOE MUDAS, SEMEIE O FUTURO.
+                MINHAS PUBLICAÇÕES
             </h2>
         </div>
-        <ul class="nav-especies py-4 px-2">
-            <div class="container container-categorias is-flex is-justify-content-space-between is-align-items-center">
-                <i class="bi bi-chevron-left is-size-5 is-clickable pr-1" @click="scrollLeft"></i>
-                <li v-for="(categoria, index) in this.visibleCategories" :key="index">
-                    {{ categoria }}
-                </li>
-                <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
-            </div>
-        </ul>
     </div>
     <div class="container mt-3 pb-6">
-        <div class="columns is-4">
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalVerPublicacao(123)">
+        <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
+            <div 
+                v-for="(publicacao, i) in grupo" :key="i" 
+                class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
+                @click="openModalVerPublicacao(publicacao.id)"
+            >
+                <!-- <img :src="planta.imagem || '@/assets/images/image_8.png'" alt="foto da planta"> -->
                 <img src="@/assets/images/image_8.png" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
                         <span class="nome-comum is-size-5">
-                            Jiboia
+                            {{ publicacao.planta.nome_popular }}
                         </span>
                         <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
+                            {{ publicacao.planta.nome_cientifico }}
                         </span>
                     </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
+                    <i 
+                        :class="['bi', publicacao.favorita ? 'bi-heart-fill' : 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        @click.stop="toggleFavorito(publicacao)"
+                    ></i>
                 </div>
                 <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalCadastrarPublicacao()">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart-fill is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-        </div>
-        <div class="columns is-4">
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
-                </span>
-            </div>
-            <div class="card-planta column is-flex is-flex-direction-column is-align-items-center is-clickable">
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
-                <div class="is-flex is-justify-content-space-between pt-3 px-2">
-                    <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
-                            Jiboia
-                        </span>
-                        <span class="nome-cientifico pt-2">
-                            Epipremnum pinnatum
-                        </span>
-                    </div>
-                    <i class="bi bi-heart is-size-5 is-clickable"></i>
-                </div>
-                <span class="local mt-4 px-4 py-2">
-                    Lorival Parente
+                    {{ publicacao.usuario.bairro }}
                 </span>
             </div>
         </div>
     </div>
     <RodaPe />
 </template>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <style scoped>
     .banner {
