@@ -16,10 +16,12 @@
         data() {
             return {
                 urlLogout: "http://localhost:5000/logout",
+                nome_pesquisado: "",
                 showDropdown: false,
                 menuVisivel: false,
             }
         },
+        emits: ['barraPesquisa'],
         props: {
             exibirPesquisa: {
                 type: Boolean,
@@ -27,6 +29,10 @@
             }
         },
         methods: {
+            async realizarPesquisa() {
+                console.log(this.nome_pesquisado);
+                this.$emit('barraPesquisa', this.nome_pesquisado, 'pesquisa');
+            },
             async logout() {
                 try {
                     const response = await axios.get(this.urlLogout);
@@ -35,6 +41,11 @@
                     this.router.push({ name: "login" });
                 } catch (error) {
                     console.error("Erro ao verificar o usuário:", error);
+                }
+            },
+            verificarEnter(event) {
+                if (event.key === "Enter") {
+                    this.realizarPesquisa();
                 }
             },
             toggleMenu() {
@@ -62,37 +73,40 @@
     <nav>
         <div class="container is-flex is-justify-content-space-between is-align-items-center px-3 py-2">
             <div class="logo">
-                <router-link to="/">
+                <a href="/">
                     <div></div>
-                </router-link>
+                </a>
             </div>
             <div v-if="exibirPesquisa" class="px-5 container-pesquisar">
                 <div class="campo-input px-4 py-2">
-                    <input id="pesquisa" placeholder="Qual planta deseja?">
-                    <i class="bi bi-search is-clickable"></i>
+                    <input id="pesquisa" 
+                        v-model="nome_pesquisado" 
+                        @keyup.enter="verificarEnter" 
+                        placeholder="Qual planta deseja?"
+                    >
+                    <i class="bi bi-search is-clickable" @click="realizarPesquisa"></i>
                 </div>
             </div>
             <div id="menu-desktop" class="is-flex is-align-items-center">
                 <router-link v-if="!this.authStore.autenticado" class="is-size-7 mr-4" to="/login">
                     Entrar
                 </router-link>
-                <router-link v-if="this.authStore.autenticado" class="is-size-5 is-clickable mr-4" to="/">
+                <a v-if="this.authStore.autenticado" class="is-size-5 is-clickable mr-4" href="/">
                     <i class="bi bi-house"></i>
-                </router-link>
+                </a>
                 <!-- <div class="is-clickable is-size-5 mr-4">
                     <i class="bi bi-chat-text"></i>
                 </div> -->
-                <div class="is-clickable is-size-5 mr-4">
+                <router-link to="/meus_favoritos" class="is-clickable is-size-5 mr-4">
                     <i class="bi bi-heart"></i>
-                </div>
+                </router-link>
                 <!-- <router-link class="is-size-4" to="/">
                     <i class="bi bi-person-fill"></i>
                 </router-link> -->
 
+                <!------------ Menu Dropdown ----------->
                 <div class="is-size-4 is-relative">
                     <i class="bi bi-person-fill is-clickable" @click="toggleDropdown"></i>
-                    
-                    <!-- Menu flutuante -->
                     <div v-show="showDropdown" class="menu-dropdown">
                         <ul class="is-size-6">
                             <router-link to="/perfil">
@@ -107,18 +121,27 @@
                         </ul>
                     </div>
                 </div>
-
             </div>
             <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png" alt="Menu">
         </div>
         <div v-if="menuVisivel" id="menu-mobile" class="is-flex is-align-items-center is-justify-content-center pt-4">
             <ul>
-                <li class="is-clickable">HOME</li>
-                <li class="is-clickable">FAVORITOS</li>
-                <li class="is-clickable">PUBLICAÇÕES</li>
-                <li class="is-clickable">PERFIL</li>
+                <a class="is-clickable" href="/">
+                    HOME
+                </a>
+                <router-link class="is-clickable" to="/minhas_publicacoes">
+                    <li>FAVORITOS</li>
+                </router-link>
+                <router-link class="is-clickable" to="/minhas_publicacoes">
+                    <li>PUBLICAÇÕES</li>
+                </router-link>
+                <router-link class="is-clickable" to="/perfil">
+                    <li>PERFIL</li>
+                </router-link>
                 <li class="is-clickable">CHAT</li>
-                <li class="is-clickable" v-if="this.authStore.autenticado" @click="logout">SAIR</li>
+                <li class="is-clickable" v-if="this.authStore.autenticado" @click="logout">
+                    SAIR
+                </li>
             </ul>
         </div>
     </nav>

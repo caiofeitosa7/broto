@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue';
 import LoginPage from '../components/PageLogin.vue';
 import PerfilPage from '../components/PagePerfil.vue';
+import FavoritosView from '../views/FavoritosView.vue';
 import PublicacoesView from '../views/PublicacoesView.vue';
 import CriarContaPage from '../components/PageCriarConta.vue';
 
@@ -33,6 +34,11 @@ const router = createRouter({
       path: '/minhas_publicacoes',
       name: 'minhas_publicacoes',
       component: PublicacoesView
+    },
+    {
+      path: '/meus_favoritos',
+      name: 'meus_favoritos',
+      component: FavoritosView
     },
   ]
 })

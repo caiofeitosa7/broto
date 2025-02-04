@@ -20,7 +20,7 @@
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
-                urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes',
+                urlCarregarPublicacoes: 'http://127.0.0.1:5000/favoritos/listar/',
                 urlFiltrarPubCategoria: 'http://127.0.0.1:5000/publicacoes_categoria',
                 urlFiltrarPubPlanta: 'http://127.0.0.1:5000/publicacoes_planta',
                 urlCategorias: 'http://127.0.0.1:5000/categorias',
@@ -71,7 +71,7 @@
             },
             async carregarPublicacoes() {
                 try {
-                    const response = await axios.get(this.urlCarregarPublicacoes);
+                    const response = await axios.get(this.urlCarregarPublicacoes + this.authStore.cod_usuario);
                     this.publicacoes = response.data;
                     console.log(response.data);
                 } catch (error) {
@@ -242,6 +242,7 @@
             // },
             async toggleFavorito(event, id) {
                 const icon = event.target;
+                let atualizarFavoritos = false;
                 let url = '';
 
                 if (icon.classList.contains('bi-heart')) {
@@ -250,6 +251,7 @@
                 } else {
                     icon.classList.replace('bi-heart-fill', 'bi-heart');
                     url = this.urlRemoveFavorito;
+                    atualizarFavoritos = true;
                 }
 
                 try {
@@ -257,6 +259,10 @@
                         usuario_id: this.authStore.cod_usuario,
                         publicacao_id: id
                     });
+
+                    if (response.status === 200 && atualizarFavoritos) 
+                        this.publicacoes = this.publicacoes.filter(p => p.id !== id);
+                    
                 } catch (error) {
                     console.error('Erro ao favoritar:', error);
                 }
@@ -281,7 +287,6 @@
             }
         },
         mounted() {
-            this.getCategorias();
             this.carregarPublicacoes();
             window.addEventListener("resize", this.updateItemsPerPage);
         },
@@ -451,15 +456,15 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModalProcurar"></button>
     </div>
 
-    <Menu @barraPesquisa="fetchPublicacoes" />
+    <Menu :exibirPesquisa="false" />
 
     <div>
         <div class="banner">
             <h2 class="has-text-white is-size-4 px-3">
-                DOE MUDAS, SEMEIE O FUTURO.
+                MEUS FAVORITOS
             </h2>
         </div>
-        <ul class="nav-especies py-4 px-2">
+        <!-- <ul class="nav-especies py-4 px-2">
             <div class="container container-categorias is-flex is-justify-content-space-between is-align-items-center">
                 <i class="bi bi-chevron-left is-size-5 is-clickable pr-1" @click="scrollLeft"></i>
                 <li v-for="(categoria, index) in this.visibleCategories" :key="index">
@@ -469,33 +474,8 @@
                 </li>
                 <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
             </div>
-        </ul>
+        </ul> -->
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     <div class="container mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
             <div 
@@ -520,7 +500,7 @@
                         </span>
                     </div>
                     <i 
-                        :class="['bi', 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        :class="['bi', 'bi-heart-fill', 'is-size-5', 'is-clickable']" 
                         @click.stop="toggleFavorito($event, publicacao.id)"
                     ></i>
                     

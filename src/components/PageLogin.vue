@@ -20,7 +20,14 @@
             const realizarLogin = async () => {
                 try {
                     const response = await axios.post(urlLogin, form.value);
-                    authStore.login(response.data.user.id, response.data.user.nome);
+
+                    console.log(response.data);
+
+                    authStore.login(
+                        response.data.user.id, 
+                        response.data.user.nome,
+                        response.data.favoritos
+                    );
                     router.push({ name: "home" });
                 } catch (error) {
                     erro.value = error.response?.data?.message || "Erro ao realizar login";
