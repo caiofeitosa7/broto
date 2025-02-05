@@ -72,11 +72,10 @@
 <template>
     <nav>
         <div class="container is-flex is-justify-content-space-between is-align-items-center px-3 py-2">
-            <div class="logo">
-                <a href="/">
-                    <div></div>
-                </a>
-            </div>
+            <a class="logo" href="/">
+                <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="35px" height="35px"/>
+            </a>
+
             <div v-if="exibirPesquisa" class="px-5 container-pesquisar">
                 <div class="campo-input px-4 py-2">
                     <input id="pesquisa" 
@@ -122,14 +121,14 @@
                     </div>
                 </div>
             </div>
-            <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png" alt="Menu">
+            <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png">
         </div>
         <div v-if="menuVisivel" id="menu-mobile" class="is-flex is-align-items-center is-justify-content-center pt-4">
             <ul>
                 <a class="is-clickable" href="/">
-                    HOME
+                    <li>HOME</li>
                 </a>
-                <router-link class="is-clickable" to="/minhas_publicacoes">
+                <router-link class="is-clickable" to="/meus_favoritos">
                     <li>FAVORITOS</li>
                 </router-link>
                 <router-link class="is-clickable" to="/minhas_publicacoes">

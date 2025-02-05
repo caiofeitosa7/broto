@@ -82,12 +82,7 @@
             },
             // Função para buscar publicações da API ao clicar em uma categoria ou pesquisar pelo nome da planta
             async fetchPublicacoes(string, tipo_filtro) {
-                let url = "";
-
-                if (tipo_filtro === 'categoria')
-                    url = this.urlFiltrarPubCategoria;
-                else
-                    url = this.urlFiltrarPubPlanta;
+                let url = tipo_filtro === 'categoria' ? this.urlFiltrarPubCategoria : this.urlFiltrarPubPlanta;
                 
                 try {
                     const response = await axios.get(url + '/' + string);
@@ -208,7 +203,6 @@
 
                     if (response.status === 200) {
                         this.closeModalCadastrarPublicacao();
-
                         this.tituloModal = "Sucesso";
                         this.conteudoModal = "Publicação cadastrada com sucesso!";
                         this.showModal = true;
@@ -224,13 +218,14 @@
                     this.showModal = true;
                 }
             },
-            async openModalVerPublicacao(nomeComum, nomeCientifico, local, quantidade, foto) {
+            async openModalVerPublicacao(nomeComum, nomeCientifico, local, quantidade, foto, numero) {
                 this.showModalVerPublicacao = true;
                 this.publicacaoClicada = {
                     'nomeComum': nomeComum,
                     'nomeCientifico': nomeCientifico,
-                    'local': local,
                     'quantidade': quantidade,
+                    'contato': numero,
+                    'local': local,
                     'foto': foto
                 }
             },
@@ -322,9 +317,11 @@
                 <p>
                     <strong>Quantidade:</strong> {{ publicacaoClicada.quantidade }}
                 </p>
-                <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
-                    Conversar
-                </div>
+                <a :href="'https://wa.me/' + publicacaoClicada.contato" target="_blank">
+                    <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
+                        Conversar
+                    </div>
+                </a>
             </div>
         </div>
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
@@ -498,7 +495,7 @@
 
     <div class="container mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
-            <div 
+            <!-- <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
                 @click="openModalVerPublicacao(
@@ -506,8 +503,14 @@
                     publicacao.planta.nome_cientifico, 
                     publicacao.usuario.bairro,
                     publicacao.quantidade,
-                    publicacao.foto.imagem_base64
+                    publicacao.foto.imagem_base64,
+                    publicacao.usuario.numero
                 )"
+            > -->
+            <div 
+                v-for="(publicacao, i) in grupo" :key="i" 
+                class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
+                @click="openModalCadastrarPublicacao()"
             >
                 <img :src=publicacao.foto.imagem_base64 class="foto-publicacao" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">

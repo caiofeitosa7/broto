@@ -21,6 +21,8 @@
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
                 urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes_usuario',
+                urlAddFavorito: 'http://127.0.0.1:5000/favoritos/adicionar',
+                urlRemoveFavorito: 'http://127.0.0.1:5000/favoritos/remover',
                 urlCategorias: 'http://localhost:5000/categorias',
                 showModal: false,
                 tituloModal: "",
@@ -30,7 +32,7 @@
                 itemsPerPage: 0,
                 currentIndex: 0,
                 showModalCadastrarPublicacao: false,
-                showModalVerPlanta: false,
+                showModalVerPublicacao: false,
                 showModalProcurar: false,
                 fotoCarregada: false,
                 fotoPreview: null,
@@ -56,7 +58,7 @@
         },
         methods: {
             closeModal() {
-                this.showModalVerPlanta = false;
+                this.showModalVerPublicacao = false;
                 this.showModal = false;
             },
             closeModalCadastrarPublicacao() {
@@ -204,26 +206,38 @@
                     this.showModal = true;
                 }
             },
-            async openModalVerPublicacao(plantaId) {
-                this.showModalVerPlanta = true;
-
-                try {
-                    // const response = await fetch(`https://api.example.com/plants/${plantaId}`);
-                    // if (!response.ok) throw new Error("Erro ao buscar dados da planta");
-                    // this.plantaClicada = await response.json();
-
-                    this.plantaClicada = {
-                        'nomeComum': 'Jiboia',
-                        'nomeCientifico': 'Abc',
-                        'local': 'Prefeitura',
-                        'quantidade': 3
-                    }
-
-                } catch (error) {
-                    console.error("Erro ao carregar dados:", error);
-                    this.plantaClicada = { nomeComum: "Erro ao carregar dados" };
+            async openModalVerPublicacao(nomeComum, nomeCientifico, local, quantidade, foto, numero) {
+                this.showModalVerPublicacao = true;
+                this.publicacaoClicada = {
+                    'nomeComum': nomeComum,
+                    'nomeCientifico': nomeCientifico,
+                    'quantidade': quantidade,
+                    'contato': numero,
+                    'local': local,
+                    'foto': foto,
                 }
             },
+            async toggleFavorito(event, id) {
+                const icon = event.target;
+                let url = '';
+
+                if (icon.classList.contains('bi-heart')) {
+                    icon.classList.replace('bi-heart', 'bi-heart-fill');
+                    url = this.urlAddFavorito;
+                } else {
+                    icon.classList.replace('bi-heart-fill', 'bi-heart');
+                    url = this.urlRemoveFavorito;
+                }
+
+                try {
+                    const response = await axios.post(url, {
+                        usuario_id: this.authStore.cod_usuario,
+                        publicacao_id: id
+                    });
+                } catch (error) {
+                    console.error('Erro ao favoritar:', error);
+                }
+            }
         },
         mounted() {
             this.carregarPublicacoes();
@@ -239,31 +253,33 @@
     <ModalMensagem :showModal="showModal" :titleModal="tituloModal" :contentModal="conteudoModal" @close="closeModal"/>
 
     <!-- Modal de Visualizar Planta -->
-    <div v-if="showModalVerPlanta" class="modal is-active">
+    <div v-if="showModalVerPublicacao" class="modal is-active">
         <div class="modal-background" @click="closeModal"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
             <div class="box">
                 <div class="is-flex is-flex-direction-column is-justify-align-items-center">
-                    <img class="imagem-planta" src="@/assets/images/image_8.png" alt="foto da planta">
-                    <p class="has-text-centered has-text-weight-medium is-size-4 pt-3">
-                        {{ plantaClicada.nomeComum || 'Carregando...' }}
+                    <img class="imagem-planta" :src=publicacaoClicada.foto alt="foto da planta">
+                    <p class="has-text-centered has-text-weight-medium is-size-6 pt-3">
+                        {{ publicacaoClicada.nomeComum || 'Carregando...' }}
                     </p>
                     <p class="has-text-centered is-size-7 pt-1 pb-3">
-                        {{ plantaClicada.nomeCientifico }}
+                        {{ publicacaoClicada.nomeCientifico }}
                     </p>
                 </div>
                 <p>
-                    <strong>Dono(a):</strong> {{ plantaClicada.nomeCientifico }}
+                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeCientifico }}
                 </p>
                 <p class="py-2">
-                    <strong>Localidade:</strong> {{ plantaClicada.local }}
+                    <strong>Localidade:</strong> {{ publicacaoClicada.local }}
                 </p>
                 <p>
-                    <strong>Quantidade:</strong> {{ plantaClicada.quantidade }}
+                    <strong>Quantidade:</strong> {{ publicacaoClicada.quantidade }}
                 </p>
-                <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
-                    Conversar
-                </div>
+                <a :href="'https://wa.me/' + publicacaoClicada.contato" target="_blank">
+                    <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
+                        Conversar
+                    </div>
+                </a>
             </div>
         </div>
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
@@ -425,23 +441,38 @@
             <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
-                @click="openModalVerPublicacao(publicacao.id)"
+                @click="openModalVerPublicacao(
+                    publicacao.planta.nome_popular,
+                    publicacao.planta.nome_cientifico, 
+                    publicacao.usuario.bairro,
+                    publicacao.quantidade,
+                    publicacao.foto.imagem_base64,
+                    publicacao.usuario.numero
+                )"
             >
-                <!-- <img :src="planta.imagem || '@/assets/images/image_8.png'" alt="foto da planta"> -->
-                <img src="@/assets/images/image_8.png" alt="foto da planta">
+                <img :src=publicacao.foto.imagem_base64 class="foto-publicacao" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
-                        <span class="nome-comum is-size-5">
+                        <span class="nome-comum is-size-6 has-text-weight-bold">
                             {{ publicacao.planta.nome_popular }}
                         </span>
-                        <span class="nome-cientifico pt-2">
+                        <span class="nome-cientifico">
                             {{ publicacao.planta.nome_cientifico }}
                         </span>
                     </div>
                     <i 
-                        :class="['bi', publicacao.favorita ? 'bi-heart-fill' : 'bi-heart', 'is-size-5', 'is-clickable']" 
-                        @click.stop="toggleFavorito(publicacao)"
+                        :class="['bi', 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        @click.stop="toggleFavorito($event, publicacao.id)"
                     ></i>
+                    
+                    <!-- <i 
+                        :class="['bi', publicacao.favorita ? 'bi-heart-fill' : 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        @click.stop="toggleFavorito(publicacao.id)"
+                    ></i> -->
+                    <!-- <i 
+                        :class="['bi', this.authStore.favoritos.includes(publicacao.id) ? 'bi-heart-fill' : 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        @click.stop="toggleFavorito(publicacao)"
+                    ></i> -->
                 </div>
                 <span class="local mt-4 px-4 py-2">
                     {{ publicacao.usuario.bairro }}
@@ -506,6 +537,8 @@
     }
 
     .card-planta {
+        line-height: normal;
+        
         div {
             width: 100%;
         }
