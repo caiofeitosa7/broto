@@ -76,41 +76,19 @@
                 this.showModalProcurar = false;
                 // this.nomePlantaProcurar = "";
             },
-
-
-
-
-
-
-
-
-
-
-
-
-
             async carregarPublicacoes() {
-                // try {
+                try {
                     let usuario_id = this.authStore.cod_usuario;
                     console.log(this.urlCarregarPublicacoes + '/' + usuario_id);
                     const response = await axios.get(this.urlCarregarPublicacoes + '/' + usuario_id);
-                    // this.publicacoes = [
-                    //     { id: 1, nome_comum: "Jiboia", nome_cientifico: "Epipremnum pinnatum", local: "Lorival Parente", favorita: false, imagem: '@/assets/images/image_8.png' },
-                    //     { id: 2, nome_comum: "Espada-de-São-Jorge", nome_cientifico: "Sansevieria trifasciata", local: "Centro", favorita: true, imagem: '@/assets/images/image_8.png' },
-                    //     { id: 3, nome_comum: "Costela-de-Adão", nome_cientifico: "Monstera deliciosa", local: "Boa Vista", favorita: false, imagem: '@/assets/images/image_8.png' },
-                    //     { id: 4, nome_comum: "Samambaia", nome_cientifico: "Nephrolepis exaltata", local: "Macaúba", favorita: false, imagem: '@/assets/images/image_8.png' },
-                    //     { id: 5, nome_comum: "Ficus", nome_cientifico: "Ficus benjamina", local: "Centro", favorita: false, imagem: '@/assets/images/image_8.png' },
-                    //     { id: 6, nome_comum: "Cacto", nome_cientifico: "Cactaceae", local: "Vermelha", favorita: true, imagem: '@/assets/images/image_8.png' },
-                    // ];
-
                     console.log(response.data);
 
                     this.publicacoes = response.data;
-                // } catch (error) {
-                //     console.error("Erro ao carregar plantas:", error);
-                // } finally {
-                //     this.carregando = false;
-                // }
+                } catch (error) {
+                    console.error("Erro ao carregar plantas:", error);
+                } finally {
+                    this.carregando = false;
+                }
             },
             confirmarPlanta() {
                 if (!this.idPlantaBuscada) {
@@ -190,6 +168,7 @@
 
                     if (response.status === 200) {
                         this.closeModalCadastrarPublicacao();
+                        this.carregarPublicacoes();
 
                         this.tituloModal = "Sucesso";
                         this.conteudoModal = "Publicação cadastrada com sucesso!";
@@ -408,33 +387,10 @@
 
     <Menu :exibirPesquisa="false" />
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div>
-        <div class="banner">
-            <h2 class="has-text-white is-size-4 px-3">
-                MINHAS PUBLICAÇÕES
-            </h2>
-        </div>
+    <div class="banner">
+        <h2 class="has-text-white is-size-4 px-3">
+            MINHAS PUBLICAÇÕES
+        </h2>
     </div>
     <div class="container mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
@@ -480,23 +436,14 @@
             </div>
         </div>
     </div>
+    
+    <button class="button is-primary floating-button" @click="openModalCadastrarPublicacao()">
+        <img src="@/assets/images/add-plant.png"/>
+    </button>
+    
     <RodaPe />
+
 </template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <style scoped>
     .banner {
@@ -656,6 +603,19 @@
             background-color: hsla(171deg, 100%, 41%,1); /* cor do botão de rolagem */
             border-radius: 13px;
         }
+    }
+
+    .floating-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     @media screen and (max-width: 768px) {
