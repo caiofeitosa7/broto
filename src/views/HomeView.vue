@@ -69,6 +69,9 @@
                 this.showModalProcurar = false;
                 // this.nomePlantaProcurar = "";
             },
+            abrirInputFoto() {
+                document.getElementById("input-foto").click()
+            },
             async carregarPublicacoes() {
                 try {
                     const response = await axios.get(this.urlCarregarPublicacoes);
@@ -182,9 +185,6 @@
                     };
                     reader.readAsDataURL(file);
                 }
-            },
-            abrirInputFoto() {
-                document.getElementById("input-foto").click()
             },
             async cadastrarPublicacao() {
                 let dados = {
