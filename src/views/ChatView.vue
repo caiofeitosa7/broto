@@ -276,8 +276,15 @@
             </div>
             <div class="conversation-main" ref="messagesContainer">
               <ul class="conversation-wrapper">
-                <div class="coversation-divider">
+                <!-- <div class="coversation-divider">
                   <span>Hoje</span>
+                </div> -->
+                <div class="conversation-item msg-alerta">
+                    <p class="conversation-item-text ml-0">
+                        No Broto, a sua segurança vem em primeiro lugar. Para proteger seu perfil, 
+                        evite compartilhar informações pessoais ou qualquer dado do seu perfil neste chat. 
+                        Fique atento(a) a possíveis tentativas de golpe!
+                    </p>
                 </div>
                 <li v-for="message in selectedChat.messages" :key="message.id" :class="{'me': message.not_me}" class="conversation-item">
                   <div class="conversation-item-content">

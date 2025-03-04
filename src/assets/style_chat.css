@@ -437,7 +437,6 @@ body {
 .conversation-buttons > :active {
     background-color: var(--slate-200);
 }
-
 .conversation-main {
     overflow-y: auto;
     overflow-x: hidden;
@@ -452,6 +451,16 @@ body {
     align-items: flex-end;
     flex-direction: row-reverse;
     margin-bottom: 12px;
+}
+.msg-alerta {
+    justify-content: center;
+    
+    p {
+        background-color: var(--emerald-100);
+        color: var(--emerald-700);
+        text-align: justify;
+        font-size: 12px;
+    }
 }
 .conversation-item.me {
     flex-direction: row;
@@ -512,6 +521,7 @@ body {
 .conversation-item.me .conversation-item-time {
     color: rgba(255, 255, 255, .7);
 }
+
 .conversation-item-dropdown {
     position: absolute;
     top: 0;
@@ -617,7 +627,6 @@ body {
     position: relative;
     z-index: 1;
 }
-
 .conversation-form {
     padding: 8px 16px;
     background-color: var(--white);
