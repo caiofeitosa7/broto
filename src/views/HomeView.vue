@@ -469,33 +469,9 @@
         </ul>
     </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     <div class="container mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
-            <!-- <div 
+            <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
                 @click="openModalVerPublicacao(
@@ -506,12 +482,12 @@
                     publicacao.foto.imagem_base64,
                     publicacao.usuario.numero
                 )"
-            > -->
-            <div 
+            >
+            <!-- <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
                 @click="openModalCadastrarPublicacao()"
-            >
+            > -->
                 <img :src=publicacao.foto.imagem_base64 class="foto-publicacao" alt="foto da planta">
                 <div class="is-flex is-justify-content-space-between pt-3 px-2">
                     <div class="is-flex is-flex-direction-column">
@@ -583,7 +559,7 @@
         }
 
         span:hover {
-            color: var(--verde-secundario);
+            color: #81b5b0;
         }
     }
 

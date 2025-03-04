@@ -76,12 +76,13 @@
                 <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="35px" height="35px"/>
             </a>
 
-            <div v-if="exibirPesquisa" class="px-5 container-pesquisar">
+            <div v-if="exibirPesquisa" class="px-2 container-pesquisar">
                 <div class="campo-input px-4 py-2">
                     <input id="pesquisa" 
                         v-model="nome_pesquisado" 
                         @keyup.enter="verificarEnter" 
                         placeholder="Qual planta deseja?"
+                        class="is-size-7"
                     >
                     <i class="bi bi-search is-clickable" @click="realizarPesquisa"></i>
                 </div>
@@ -93,15 +94,12 @@
                 <a v-if="this.authStore.autenticado" class="is-size-5 is-clickable mr-4" href="/">
                     <i class="bi bi-house"></i>
                 </a>
-                <!-- <div class="is-clickable is-size-5 mr-4">
+                <router-link v-if="this.authStore.autenticado" to="/chat" class="is-clickable is-size-5 mr-4">
                     <i class="bi bi-chat-text"></i>
-                </div> -->
+                </router-link>
                 <router-link to="/meus_favoritos" class="is-clickable is-size-5 mr-4">
                     <i class="bi bi-heart"></i>
                 </router-link>
-                <!-- <router-link class="is-size-4" to="/">
-                    <i class="bi bi-person-fill"></i>
-                </router-link> -->
 
                 <!------------ Menu Dropdown ----------->
                 <div class="is-size-4 is-relative">
@@ -114,7 +112,7 @@
                             <router-link to="/minhas_publicacoes">
                                 <li>Publicações</li>
                             </router-link>
-                            <li v-if="authStore.autenticado" @click="logout">
+                            <li v-if="this.authStore.autenticado" @click="logout">
                                 Sair
                             </li>
                         </ul>
@@ -137,9 +135,14 @@
                 <router-link class="is-clickable" to="/perfil">
                     <li>PERFIL</li>
                 </router-link>
-                <li class="is-clickable">CHAT</li>
+                <router-link class="is-clickable" to="/chat">
+                    <li>CHAT</li>
+                </router-link>
                 <li class="is-clickable" v-if="this.authStore.autenticado" @click="logout">
                     SAIR
+                </li>
+                <li class="is-clickable" v-if="!this.authStore.autenticado" @click="logout">
+                    LOGIN
                 </li>
             </ul>
         </div>

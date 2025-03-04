@@ -70,7 +70,7 @@
                 <div class="campo-input px-3 py-2">
                     <label for="senha"><i class="bi bi-lock-fill"></i></label>
                     <input id="senha" v-model="form.senha" :type="isPasswordVisible ? 'text' : 'password'">
-                    <div @click="togglePasswordVisibility" class="is-clickable ml-2">
+                    <div @click="togglePasswordVisibility" class="is-clickable">
                         <i :class="isPasswordVisible ? 'bi bi-eye-fill m-0' : 'bi bi-eye-slash-fill m-0'"></i>
                     </div>
                 </div>
@@ -124,15 +124,18 @@
 
             input {
                 background-color: var(--verde-claro);
-                width: -webkit-fill-available;
+                /* width: -webkit-fill-available; */
                 color: var(--cor-principal);
-                font-weight: 600;
                 border: none;
 
                 &:focus {
                     outline: none;
                 }
             }
+        }
+
+        #senha {
+            width: 208px;
         }
 
         p:first-child {

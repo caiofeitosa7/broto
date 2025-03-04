@@ -1,131 +1,229 @@
-<script setup>
+<!-- <script>
+import Room from "../components/Chat.vue"; // Importa o componente de chat
+
+export default {
+  components: { Room },
+  data() {
+    return {
+      name: "",
+      code: "",
+      rooms: [],
+      error: null,
+      action: "",
+      currentRoom: null,
+    };
+  },
+  methods: {
+    async fetchRooms() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/rooms");
+        this.rooms = await response.json();
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+      }
+    },
+    async handleSubmit() {
+      this.error = null;
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: this.name, code: this.code, create: this.action === "create" }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          this.error = data.error;
+        } else {
+          this.currentRoom = data.room; // Atualiza a sala atual para exibir o componente Room
+        }
+      } catch (error) {
+        this.error = "Failed to connect to the server.";
+      }
+    },
+    leaveRoom() {
+      this.currentRoom = null; // Volta para a tela inicial
+    }
+  },
+  mounted() {
+    this.fetchRooms();
+  },
+};
 </script>
 
 <template>
-    <div class="container is-flex is-flex-direction-column is-justify-content-space-between">
-        <nav class="is-flex is-justify-content-space-between">
-            <div class="container-logo background-gradiente-verde is-flex is-align-items-center px-6 is-size-4">
-                <h1 class="has-text-white">BROTO</h1>
-            </div>
-            <div class="is-flex is-align-items-center pr-4">
-                <router-link to="/criar-conta" class="btn-criar-conta py-2 px-3 mr-4">
-                    Criar Conta
-                </router-link>
-                <router-link to="/entrar" class="background-gradiente-verde btn-entrar has-text-white p-3">
-                    Entrar
-                </router-link>
-            </div>
-        </nav>
-        <div class="columns">
-            <div id="conteudo" class="column is-3">
-                <div class="columns">
-                    <div class="column">
-                        <img src="@/assets/images/vaso.jpg">
-                    </div>
-                    <div class="column">
-                        <h2>Encontre plantas<br>para sua casa</h2>
-                        <p>
-                            Troque mudas de plantas com pessoas próximas, promovendo a sustentabilidade e a conexão com a natureza.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="column is-9 fundo-verde background-gradiente-verde pb-5">
-                <button class="py-1">Ver plantas</button>
-            </div>
-        </div>
-    </div>
+  <div v-if="!currentRoom" class="container">
+    <form @submit.prevent="handleSubmit" class="buttons">
+      <h3>Enter The Chat Room</h3>
+      <div>
+        <label>Name:</label>
+        <input v-model="name" placeholder="Pick a name!" required />
+      </div>
+      <div class="join">
+        <input v-model="code" placeholder="Room Code" />
+        <button type="submit" @click="action = 'join'">Join a Room</button>
+      </div>
+      <button type="submit" @click="action = 'create'" class="create-btn">Create a Room</button>
+
+      <ul v-if="error">
+        <li>{{ error }}</li>
+      </ul>
+    </form>
+
+    <h3>Available Rooms</h3>
+    <ul v-if="rooms.length">
+      <li v-for="room in rooms" :key="room">{{ room }}</li>
+    </ul>
+    <p v-else>No rooms available.</p>
+  </div>
+
+  <Room v-else :roomCode="currentRoom" :userName="name" @leave="leaveRoom" />
 </template>
 
 <style scoped>
-    .container {
-        max-height: 100vh;
-        max-width: 100vw;
+.container {
+  max-width: 400px;
+  margin: auto;
+  text-align: center;
+}
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.create-btn {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+.join input,
+.create-btn {
+  margin-top: 10px;
+}
+</style> -->
 
-        nav {
-            height: 60px;
-        }
 
-        .btn-entrar {
-            border-radius: 7px;
-        }
+<script>
+    import RodaPe from '../components/RodaPe.vue'
 
-        .btn-entrar:hover {
-            background-color: #2e615e !important;
+    export default {
+        components: {
+            RodaPe
+        },
+        data() {
+            return {
+                accepted: false
+            };
+        },
+        methods: {
+            proceed() {
+                alert("Você aceitou os termos e pode continuar.");
+            }
         }
+    };
+</script>
 
-        .btn-criar-conta {
-            border: 2px solid #1F3F3E;
-            font-weight: 500;
-        }
+<template>
+    <div class="banner">
+        <h2 class="has-text-white has-text-centered is-size-4 px-3">
+            TERMO DE COMPROMISSO E RESPONSABILIDADE
+        </h2>
+    </div>
+    <div class="container">
+        <p class="has-text-weight-bold">1. OBJETIVO</p>
+        <p>
+            O presente Termo de Compromisso e Responsabilidade estabelece as condições de uso da aplicação BROTO, 
+            desenvolvida pela Prefeitura de Teresina, para facilitar a doação de mudas de plantas entre usuários 
+            da plataforma.
+        </p>
+        <p class="has-text-weight-bold">2. ISENÇÃO DE RESPONSABILIDADE DA PREFEITURA DE TERESINA</p>
+        <p>
+            2.1. A Prefeitura de Teresina não se responsabiliza por qualquer interação, comunicação ou transação 
+            realizada entre os usuários da aplicação BROTO.
+        </p>
+        <p>
+            2.2. A Prefeitura de Teresina não garante a veracidade das informações fornecidas pelos usuários sobre 
+            as mudas disponíveis, incluindo sua condição, qualidade ou disponibilidade.
+        </p>
+        <p>
+            2.3. A Prefeitura de Teresina não se responsabiliza por quaisquer danos, prejuízos ou incidentes decorrentes 
+            do uso da plataforma, incluindo, mas não se limitando a, golpes, fraudes, conflitos entre usuários ou qualquer 
+            outro tipo de problema que possa surgir em decorrência das interações realizadas na aplicação.
+        </p>
+        <p class="has-text-weight-bold">3. RESPONSABILIDADE DO USUÁRIO</p>
+        <p>
+            3.1. O usuário é responsável por todas as informações que fornece na plataforma, devendo garantir que são verídicas e completas.
+        </p>
+        <p>
+            3.2. O usuário deve tomar as devidas precauções ao interagir com terceiros, incluindo, mas não se limitando a,
+            verificar a idoneidade de outros usuários e evitar a divulgação de informações pessoais sensíveis.
+        </p>
+        <p>
+            3.3. O usuário compreende que o uso da aplicação BROTO é voluntário e que assume integral responsabilidade 
+            por suas ações e decisões tomadas dentro da plataforma.
+        </p>
+        <p class="has-text-weight-bold">4. ORIENTAÇÕES DE SEGURANÇA</p>
+        <p>
+            4.1. Recomenda-se que as trocas sejam realizadas em locais públicos e seguros.
+        </p>
+        <p>
+            4.2. O usuário não deve compartilhar dados pessoais sensíveis, como informações bancárias, endereço residencial 
+            ou qualquer outra informação que possa comprometer sua segurança.
+        </p>
+        <p>
+            4.3. Em caso de comportamento suspeito, golpe ou qualquer outro problema, recomenda-se que o usuário denuncie 
+            o ocorrido às autoridades competentes.
+        </p>
+        <p class="has-text-weight-bold">5. ACEITE DOS TERMOS</p>
+        <p>
+            Ao utilizar a aplicação BROTO, o usuário declara ter lido, compreendido e aceitado todos os termos aqui descritos, 
+            isentando a Prefeitura de Teresina de qualquer responsabilidade sobre as interações realizadas na plataforma.
+        </p>
+    
+        <!-- <div class="flex items-center mt-4">
+            <input type="checkbox" id="accept" v-model="accepted" class="mr-2">
+            <label for="accept">Declaro que li e aceito os termos acima.</label>
+        </div>
+        
+        <button 
+            :disabled="!accepted" 
+            @click="proceed" 
+            class="mt-4 bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50">
+            Continuar
+        </button> -->
+    </div>
 
-        .background-gradiente-verde {
-            background: linear-gradient(to right, #1F3F3E, #14272A);
-        }
+    <RodaPe />
+</template>
 
-        .container-logo {
-            font-family: "Pridi", serif;
-        }
+
+<style scoped>
+    .banner {
+        background-image: url('@/assets/images/banner_inicio2.jpg');
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 180px;
 
         h2 {
-            font-size: large;
-            line-height: normal;
             font-family: "Aboreto", system-ui;
-        }
-
-        a:first-child {
-            background-color: rgba(255, 255, 255, .2);
-            border-radius: 7px;
-
-            &:hover {
-                background-color: rgba(255, 255, 255, .35);
-            }
-        }
-
-        .fundo-verde {
-            height: 91.9vh;
-        }
-
-        button {
-            border: 2px solid #fff;
-            border-radius: 7px;
-            color: #fff;
-            width: 140px;
-
-            &:hover {
-                background-color: rgba(255, 255, 255, .1);
-            }
-        }
-
-        #conteudo {
-            padding-left: 6vw;
-            color: #fff;
-            z-index: 2;
-        }
-
-        img {
-            min-width: 450px;
+            line-height: normal;
         }
     }
 
-    @media screen and (min-width: 1024px) {
-        .container {
-            max-width: 100%;
-        }
-
-        h2, p {
-            min-width: 500px;
-        }
+    .container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
     }
 
-    @media screen and (min-width: 1216px) {
-        .container {
-            max-width: 100% !important;
-        }
-
-        #conteudo {
-            padding-left: 7.5vw !important;
-        }
+    p {
+        margin-bottom: 10px;
+        line-height: 1.2;
     }
 
     @media screen and (max-width: 600px) {
@@ -136,7 +234,7 @@
 
     @media screen and (max-width: 400px) {
         h2 {
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
         }
     }
 </style>
