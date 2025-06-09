@@ -12,14 +12,37 @@
             return {
                 urlConversas: 'http://127.0.0.1:5000/chat/conversas/',
                 urlMensagens: 'http://127.0.0.1:5000/chat/mensagens/',
+                urlReport: 'http://127.0.0.1:5000/chat/report',
                 urlSocket: 'http://localhost:5000',
                 selectedChat: false,
                 newMessage: "",
                 socket: null,
                 chats: [],
+
+                showReportModal: false,
+                reportData: {
+                    description: "",
+                    category: 0,  // categoria padrão
+                },
+                reportCategories: [
+                    { value: 0, label: "Spam/Propaganda" },
+                    { value: 1, label: "Assédio" },
+                    { value: 2, label: "Conteúdo Inadequado" },
+                    { value: 3, label: "Tentativa de Golpe" },
+                    { value: 4, label: "Outros" }
+                ],
             };
         },
         methods: {
+            formatarData(dateString) {
+                if (!dateString) return '';
+                return new Date(dateString).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            },
+            formatarHoraMinuto(dataHora) {
+                if (!dataHora) return "";
+                const data = new Date(dataHora);
+                return data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            },
             async loadMessages(chatId) {
                 try {
                     const response = await axios.get(this.urlMensagens + `/${chatId}/${this.authStore.cod_usuario}`);
@@ -30,16 +53,19 @@
                         chat.messages = messages.map((msg) => ({
                                 id: msg.id,
                                 texto: msg.texto,
-                                data_hora: new Date(msg.data_hora).toLocaleTimeString([], {
+                                data_hora: new Date(msg.data_hora).toLocaleString([], {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
                                     hour: "2-digit",
-                                    minute: "2-digit",
+                                    minute: "2-digit"
                                 }),
                                 not_me: msg.not_me,
                             }));
                         this.scrollToBottom();
                     }
                 } catch (error) {
-                    console.error("Erro ao buscar mensagens:", error);
+                    console.error("Erro ao buscar mensagens");
                 }
             },
             async fetchChats() {
@@ -52,22 +78,31 @@
                         inicial: chat.inicial_outro_usuario,
                         lastMessage: chat.ultima_mensagem,
                         unread: chat.mensagens_nao_lidas,
-                        time: chat.ultima_mensagem_time ? chat.ultima_mensagem_time.split(" ")[1] : "",
+                        time: chat.ultima_mensagem_time ? chat.ultima_mensagem_time : "",
                         online: false,
                         messages: []
                     }));
 
+                    // join em todos os chats
+                    this.chats.forEach(chat => {
+                        this.socket.emit("join", { 'cod_conversa': chat.id });
+                    });
 
-                    console.log(this.chats);
+                    // Verifica se há um ID de conversa na URL e abre automaticamente
+                    const conversaId = this.$route.query.conversa;
+                    if (conversaId) {
+                        this.selectChat(Number(conversaId));
+                    }
                 } catch (error) {
-                    console.error("Erro ao carregar conversas:", error);
+                    console.error("Erro ao carregar conversas");
                 }
             },
             async selectChat(chatId) {
                 this.selectedChat = this.chats.find((chat) => chat.id === chatId);
+                this.selectedChat.unread = 0;
 
                 if (this.selectedChat) {
-                    this.connectSocket(chatId);
+                    // this.connectSocket(chatId);
                     await this.loadMessages(chatId);
                 }
             },
@@ -81,37 +116,67 @@
                         });
                         this.newMessage = "";
                     } catch (error) {
-                        console.error("Erro ao enviar mensagem:", error);
+                        console.error("Erro ao enviar mensagem");
                     }
                 }
             },
-            connectSocket(cod_conversa) {
+            inicializarSocket() {
                 this.socket = io(this.urlSocket, {
                     query: {
                         cod_usuario: this.authStore.cod_usuario,
-                        cod_conversa: cod_conversa,
                     }
                 });
-                
-                this.socket.emit("join", { cod_conversa });
 
                 this.socket.on("nova_mensagem", (mensagem) => {
-                    console.log("Mensagem recebida:", mensagem);
+                    let chat = this.chats.find((chat) => chat.id === mensagem.cod_conversa);
+                    chat.time = this.formatarHoraMinuto(mensagem.data_hora);
+                    chat.lastMessage = mensagem.texto;
 
-                    if (this.selectedChat && this.selectedChat.id === mensagem.cod_conversa) {
-                        this.selectedChat.messages.push({
+                    if (this.selectedChat.id != chat.id)
+                        chat.unread = chat.unread ? chat.unread + 1 : 1;
+
+                    if (chat && chat.id === mensagem.cod_conversa) {
+                        chat.messages.push({
                             id: mensagem.id,
                             texto: mensagem.texto,
-                            data_hora: new Date(mensagem.data_hora).toLocaleTimeString([], {
+                            data_hora: new Date(mensagem.data_hora).toLocaleString([], {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
                                 hour: "2-digit",
-                                minute: "2-digit",
+                                minute: "2-digit"
                             }),
                             not_me: mensagem.usuario !== this.authStore.cod_usuario,
                         });
                         this.scrollToBottom();
                     }
                 });
+            },
+            async submitReport() {
+                try {
+                    const reportPayload = {
+                        cod_usuario_reporter: this.authStore.cod_usuario,
+                        cod_usuario_reported: this.selectedChat.id,
+                        description: this.reportData.description,
+                        category: this.reportData.category,
+                        datetime: new Date().toISOString()
+                    };
 
+                    await axios.post(this.urlReport, reportPayload);
+                    
+                    this.showReportModal = false;
+                    this.reportData.description = "";
+                    this.reportData.category = "spam";
+                    
+                    this.titleModal = "Sucesso";
+                    this.contentModal = "Denúncia enviada com sucesso. Agradecemos seu feedback.";
+                    this.showModal = true;
+                } catch (error) {
+                    console.error("Erro ao enviar denúncia");
+                    this.titleModal = "Erro";
+                    this.contentModal = "Não foi possível enviar a denúncia. Tente novamente.";
+                    this.showModal = true;
+                }
             },
             scrollToBottom() {
                 this.$nextTick(() => {
@@ -123,34 +188,9 @@
             leaveRoom() {
                 this.socket.disconnect();
             },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         },
         mounted() {
+            this.inicializarSocket();
             this.fetchChats();
 
             // Sidebar Toggle
@@ -199,15 +239,12 @@
             <li class="active" @click="selectedChat=false">
               <a data-title="Chats"><i class="ri-chat-3-line"></i></a>
             </li>
-            <!-- <li><a href="#" data-title="Contacts"><i class="ri-contacts-line"></i></a></li>
-            <li><a href="#" data-title="Documents"><i class="ri-folder-line"></i></a></li>
-            <li><a href="#" data-title="Settings"><i class="ri-settings-line"></i></a></li> -->
             <li></li>
             <li></li>
             <li></li>
             <li class="chat-sidebar-profile">
               <button type="button" class="chat-sidebar-profile-toggle">
-                <img src="/broto-1.3.png" alt="User" />
+                <img src="/broto-1.3.png" alt="User"/>
               </button>
               <ul class="chat-sidebar-profile-dropdown">
                 <!-- <li><a href="#"><i class="ri-user-line"></i> Perfil</a></li> -->
@@ -255,50 +292,52 @@
           <!-- Conversation -->
           <div v-if="selectedChat" :class="{'conversation': true, 'active': selectedChat}">
             <div class="conversation-top">
-              <button type="button" class="conversation-back" @click="selectedChat = null">
-                <i class="ri-arrow-left-line"></i>
-              </button>
-              <div class="conversation-user">
-                <!-- <img class="conversation-user-image" :src="selectedChat.image"/> -->
-                <div class="conversation-user-initial">
-                  <span>{{ selectedChat.inicial }}</span>
+                <button type="button" class="conversation-back" @click="selectedChat = null">
+                    <i class="ri-arrow-left-line"></i>
+                </button>
+                    <div class="conversation-user">
+                        <!-- <img class="conversation-user-image" :src="selectedChat.image"/> -->
+                        <div class="conversation-user-initial">
+                            <span>{{ selectedChat.inicial }}</span>
+                        </div>
+                        <div>
+                            <div class="conversation-user-name">{{ selectedChat.name }}</div>
+                            <!-- <div class="conversation-user-status mt-1" :class="{'online': selectedChat.online}">
+                                {{ selectedChat.online ? 'online' : 'offline' }}
+                            </div> -->
+                        </div>
+                    </div>
+                <div class="conversation-buttons">
+                    <button type="button" @click="showReportModal=true">
+                        <i class="ri-error-warning-line"></i>
+                    </button>
                 </div>
-                <div>
-                  <div class="conversation-user-name">{{ selectedChat.name }}</div>
-                  <!-- <div class="conversation-user-status mt-1" :class="{'online': selectedChat.online}">
-                    {{ selectedChat.online ? 'online' : 'offline' }}
-                  </div> -->
-                </div>
-              </div>
-              <div class="conversation-buttons">
-                <button type="button"><i class="ri-error-warning-line"></i></button>
-              </div>
             </div>
             <div class="conversation-main" ref="messagesContainer">
-              <ul class="conversation-wrapper">
-                <!-- <div class="coversation-divider">
-                  <span>Hoje</span>
-                </div> -->
-                <div class="conversation-item msg-alerta">
-                    <p class="conversation-item-text ml-0">
-                        No Broto, a sua segurança vem em primeiro lugar. Para proteger seu perfil, 
-                        evite compartilhar informações pessoais ou qualquer dado do seu perfil neste chat. 
-                        Fique atento(a) a possíveis tentativas de golpe!
-                    </p>
-                </div>
-                <li v-for="message in selectedChat.messages" :key="message.id" :class="{'me': message.not_me}" class="conversation-item">
-                  <div class="conversation-item-content">
-                    <div class="conversation-item-wrapper">
-                      <div class="conversation-item-box">
-                        <div class="conversation-item-text">
-                          <p>{{ message.texto }}</p>
-                          <div class="conversation-item-time">{{ message.data_hora }}</div>
-                        </div>
-                      </div>
+                <ul class="conversation-wrapper">
+                    <!-- <div class="coversation-divider">
+                    <span>Hoje</span>
+                    </div> -->
+                    <div class="conversation-item msg-alerta">
+                        <p class="conversation-item-text ml-0">
+                            No Broto, a sua segurança vem em primeiro lugar. Para proteger seu perfil, 
+                            evite compartilhar informações pessoais ou qualquer dado do seu perfil neste chat. 
+                            Fique atento(a) a possíveis tentativas de golpe!
+                        </p>
                     </div>
-                  </div>
-                </li>
-              </ul>
+                    <li v-for="message in selectedChat.messages" :key="message.id" :class="{'me': message.not_me}" class="conversation-item">
+                        <div class="conversation-item-content">
+                            <div class="conversation-item-wrapper">
+                                <div class="conversation-item-box">
+                                    <div class="conversation-item-text">
+                                        <p>{{ message.texto }}</p>
+                                        <div class="conversation-item-time">{{ message.data_hora }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
             </div>
             <div class="conversation-form">
                 <div class="conversation-form-group ml-0">
@@ -316,21 +355,137 @@
             </div>
           </div>
           <div v-if="!selectedChat" :class="{'conversation conversation-default': true, 'active': !selectedChat}">
-            <div class="conversation-default-content">
-              <i class="ri-chat-3-line"></i>
-              <p>Selecione uma conversa para ver as mensagens!</p>
-            </div>
+                <div class="conversation-default-content">
+                    <i class="ri-chat-3-line"></i>
+                    <p>Selecione uma conversa para ver as mensagens!</p>
+                </div>
           </div>
         </div>
       </div>
+      
     </section>
+
+    <!-- Modal Denunciar -->    
+    <div class="modal" :class="{ 'is-active': showReportModal }">
+        <div class="modal-background" @click="showReportModal=false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="title-modal">Denunciar Conversa</p>
+                <button class="delete" aria-label="close" @click="showReportModal=false"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="field">
+                    <label class="label">Motivo da Denúncia</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select v-model="reportData.category">
+                                <option v-for="category in reportCategories" 
+                                        :key="category.value" 
+                                        :value="category.value">
+                                    {{ category.label }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Descrição da Situação</label>
+                    <div class="control">
+                        <textarea class="textarea" 
+                            v-model="reportData.description"
+                            placeholder="Descreva a situação em detalhes...">
+                        </textarea>
+                    </div>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger" @click="submitReport">
+                    Enviar Denúncia
+                </button>
+                <button class="button" @click="showReportModal = false">
+                    Cancelar
+                </button>
+            </footer>
+        </div>
+    </div>
   </template>
   
   <style scoped>
     @import url('https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css');
 
-    .chat-section { display: flex; }
-    .chat-sidebar { width: 80px; background: #f8f9fa; }
-    .chat-content { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
+    .chat-section {
+        display: flex;
+    }
+
+    .chat-sidebar {
+        width: 80px;
+        background: #f8f9fa;
+    }
+
+    .chat-content {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-card {
+        max-width: 500px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .modal-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .title-modal {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #ffffff;
+        line-height: 1.3;
+        padding-right: 5px;
+    }
+
+    .button.is-danger {
+        background-color: #ff3860;
+        color: white;
+    }
+
+    .modal-card button {
+        margin: 3px 3px;
+    }
+
+    .label {
+        margin-top: 15px;
+    }
+
+    .textarea {
+        min-height: 120px;
+    }
+
+    @media (max-width: 600px) {
+        .modal-card {
+            width: 80%;
+        }
+
+        .modal-card button {
+            margin: 3px 3px;
+        }
+
+        .modal-card .modal-card-foot {
+            flex-wrap: wrap;
+        }
+
+        .modal-card-title {
+            text-wrap: wrap;
+        }
+
+        .label, textarea {
+            font-size: smaller;
+        }
+    }
   </style>
   

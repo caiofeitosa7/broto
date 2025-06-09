@@ -4,13 +4,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Pridi:wght@200;300;400;500;600;700&display=swap');
 
 :root {
-    --preto: #4d4d4d;
+    --preto: #474747;
     --verde-claro: #CEE9E2;
     --cor-principal: #267762;
     --verde-secundario: #30957b;
 }
-
-
 
 .text-nowrap {
     text-wrap: nowrap;
@@ -29,8 +27,9 @@ html {
 
 body {
     font-family: "Poppins", sans-serif;
-    line-height: 14px;
+    background-color: #fff;
     color: var(--preto);
+    line-height: 14px;
 }
 
 a {

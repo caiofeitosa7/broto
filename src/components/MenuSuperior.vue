@@ -1,6 +1,6 @@
 <script>
     import { useAuthStore } from "@/stores/auth";
-    import { RouterLink, useRouter } from "vue-router";
+    import { useRouter } from "vue-router";
     import axios from "axios";
 
     export default {
@@ -30,7 +30,6 @@
         },
         methods: {
             async realizarPesquisa() {
-                console.log(this.nome_pesquisado);
                 this.$emit('barraPesquisa', this.nome_pesquisado, 'pesquisa');
             },
             async logout() {
@@ -40,7 +39,7 @@
                     this.showDropdown = false;
                     this.router.push({ name: "login" });
                 } catch (error) {
-                    console.error("Erro ao verificar o usuário:", error);
+                    console.error("Erro ao verificar o usuário");
                 }
             },
             verificarEnter(event) {
@@ -75,7 +74,6 @@
             <a class="logo" href="/">
                 <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="35px" height="35px"/>
             </a>
-
             <div v-if="exibirPesquisa" class="px-2 container-pesquisar">
                 <div class="campo-input px-4 py-2">
                     <input id="pesquisa" 
@@ -156,16 +154,6 @@
         z-index: 10; /* Garante que o elemento esteja acima de outros */
         background-color: white; /* Evita sobreposição transparente */
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: adiciona um efeito de sombra */
-    }
-
-    .logo div:first-child {
-        border-radius: 50%;
-        height: 35px;
-        width: 35px;
-    }
-
-    .logo div:first-child {
-        background-color: var(--cor-principal);
     }
 
     .container-pesquisar {

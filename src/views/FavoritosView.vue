@@ -23,9 +23,10 @@
                 urlCarregarPublicacoes: 'http://127.0.0.1:5000/favoritos/listar/',
                 urlFiltrarPubCategoria: 'http://127.0.0.1:5000/publicacoes_categoria',
                 urlFiltrarPubPlanta: 'http://127.0.0.1:5000/publicacoes_planta',
-                urlCategorias: 'http://127.0.0.1:5000/categorias',
+                urlAbrirConversa: 'http://127.0.0.1:5000/publicacao/contactar',
                 urlAddFavorito: 'http://127.0.0.1:5000/favoritos/adicionar',
                 urlRemoveFavorito: 'http://127.0.0.1:5000/favoritos/remover',
+                urlCategorias: 'http://127.0.0.1:5000/categorias',
                 carregando: true,
                 showModal: false,
                 tituloModal: "",
@@ -73,9 +74,8 @@
                 try {
                     const response = await axios.get(this.urlCarregarPublicacoes + this.authStore.cod_usuario);
                     this.publicacoes = response.data;
-                    console.log(response.data);
                 } catch (error) {
-                    console.error("Erro ao carregar plantas:", error);
+                    console.error("Erro ao carregar plantas.");
                 } finally {
                     this.carregando = false;
                 }
@@ -93,7 +93,7 @@
                     const response = await axios.get(url + '/' + string);
                     this.publicacoes = response.data;
                 } catch (error) {
-                    console.error('Erro ao buscar publicações:', error);
+                    console.error('Erro ao buscar publicações');
                 }
             },
             async getCategorias() {
@@ -107,7 +107,7 @@
                     this.categorias = await response.json().then((data) => data.map((item) => item.nome));
                     this.updateItemsPerPage();
                 } catch (error) {
-                    console.error("Erro ao buscar espécies:", error);
+                    console.error("Erro ao buscar espécies");
                 }
             },
             updateItemsPerPage() {
@@ -149,7 +149,7 @@
 
                     this.closeModalProcurar();
                 } else {
-                    console.error('Nenhuma planta foi selecionada.');
+                    console.error('Nenhuma planta foi selecionada');
                     this.mensagemErro = 'Por favor, selecione uma planta.';
                 }
             },
@@ -172,7 +172,7 @@
                         this.mensagemErro = "Nenhuma planta foi encontrada.";
                     }
                 } catch (error) {
-                    console.error("Erro ao buscar plantas:", error);
+                    console.error("Erro ao buscar plantas");
                     this.mensagemErro = "Erro ao buscar plantas. Tente novamente.";
                 }
             },
@@ -218,28 +218,24 @@
                         this.showModal = true;
                     }
                 } catch (error) {
-                    console.error("Erro ao cadastrar planta:", error);
+                    console.error("Erro ao cadastrar planta");
                     this.tituloModal = "Erro";
                     this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
                     this.showModal = true;
                 }
             },
-            async openModalVerPublicacao(nomeComum, nomeCientifico, local, quantidade, foto) {
+            async openModalVerPublicacao(id, nomeDono, nomeComum, nomeCientifico, local, quantidade, foto) {
                 this.showModalVerPublicacao = true;
                 this.publicacaoClicada = {
+                    'id': id,
+                    'nomeDono': nomeDono,
                     'nomeComum': nomeComum,
                     'nomeCientifico': nomeCientifico,
-                    'local': local,
                     'quantidade': quantidade,
+                    'local': local,
                     'foto': foto
                 }
             },
-            // toggleFavorito(id) {
-            //     const publicacao = this.publicacoes.find(p => p.id === id);
-            //     if (publicacao) {
-            //         publicacao.favorita = !publicacao.favorita;
-            //     }
-            // },
             async toggleFavorito(event, id) {
                 const icon = event.target;
                 let atualizarFavoritos = false;
@@ -264,8 +260,24 @@
                         this.publicacoes = this.publicacoes.filter(p => p.id !== id);
                     
                 } catch (error) {
-                    console.error('Erro ao favoritar:', error);
+                    console.error('Erro ao favoritar');
                 }
+            },
+            abrirConversa(id) {
+                let usuario_id = this.authStore.cod_usuario;
+
+                axios.post(this.urlAbrirConversa, {
+                    usuario_id: usuario_id,
+                    publicacao_id: id
+                }).then((res) => {
+                    const conversaId = res.data.conversa_id;
+
+                    if (conversaId) {
+                        this.$router.push({ path: '/chat', query: { conversa: conversaId } });
+                    }
+                }).catch((error) => {
+                    console.error("Erro ao abrir conversa");
+                });
             }
         },
         computed: {
@@ -304,7 +316,7 @@
         @close="closeModal"
     />
 
-    <!-- Modal de Visualizar Planta -->
+    <!-- Modal de Visualizar Publicacao -->
     <div v-if="showModalVerPublicacao" class="modal is-active">
         <div class="modal-background" @click="closeModal"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
@@ -319,7 +331,7 @@
                     </p>
                 </div>
                 <p>
-                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeCientifico }}
+                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeDono }}
                 </p>
                 <p class="py-2">
                     <strong>Localidade:</strong> {{ publicacaoClicada.local }}
@@ -327,15 +339,17 @@
                 <p>
                     <strong>Quantidade:</strong> {{ publicacaoClicada.quantidade }}
                 </p>
-                <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
-                    Conversar
-                </div>
+                <a @click="abrirConversa(this.publicacaoClicada.id)">
+                    <div class="btn-conversar is-flex is-justify-content-center mt-5 py-3">
+                        Conversar
+                    </div>
+                </a>
             </div>
         </div>
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
     </div>
 
-    <!-- Modal de Cadastrar Planta -->
+    <!-- Modal de Cadastrar Publicacao -->
     <div v-if="showModalCadastrarPublicacao" class="modal is-active">
         <div class="modal-background" @click="closeModalCadastrarPublicacao"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
@@ -406,7 +420,7 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModalCadastrarPublicacao"></button>
     </div>
 
-    <!-- Modal de Procurar Planta -->
+    <!-- Modal de Procurar Publicacao -->
     <div v-if="showModalProcurar" id="modalProcurarPlanta" class="modal is-active">
         <div class="modal-background" @click="closeModalProcurar"></div>
         <div class="modal-content is-flex is-justify-content-center px-5">
@@ -476,12 +490,14 @@
             </div>
         </ul> -->
     </div>
-    <div class="container mt-3 pb-6">
+    <div class="container container-publicacoes mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
             <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
                 @click="openModalVerPublicacao(
+                    publicacao.id,
+                    publicacao.usuario.nome.split(' ')[0],
                     publicacao.planta.nome_popular,
                     publicacao.planta.nome_cientifico, 
                     publicacao.usuario.bairro,
@@ -519,10 +535,15 @@
             </div>
         </div>
     </div>
+
     <RodaPe />
+    
 </template>
 
 <style scoped>
+    .container-publicacoes {
+        min-height: 75vh;
+    }
     .banner {
         background-image: url('@/assets/images/banner_inicio2.jpg');
         background-size: cover;
@@ -591,7 +612,12 @@
     }
     
     .box {
+        background-color: #fff;
         max-width: 310px;
+    }
+
+    .box strong, .box p {
+        color: var(--preto);
     }
 
     .modal-content {

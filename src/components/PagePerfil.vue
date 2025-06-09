@@ -24,19 +24,16 @@
         data() {
             return {
                 urlAtualizarUsuario: "http://127.0.0.1:5000//atualizar_usuario",
-                // urlVerificarUsuario: 'http://127.0.0.1:5000/verificar_usuario',
                 urlGetUsuario: 'http://127.0.0.1:5000/get_usuario/',
                 senhaVisivel: false,
                 showModal: false,
                 titleModal: "",
                 contentModal: "",
-                // senha: "",
-                // confirmacaoSenha: "",
-                // senhasIguais: false,
-                // usuarioExistente: false,
                 dadosUsuario: {
                     nome: "",
                     email: "",
+                    cep: "",
+                    cidade: "",
                     logradouro: "",
                     bairro: "",
                     numero: "",
@@ -51,15 +48,12 @@
         methods: {
             getUsuario() {
                 const idUsuario = this.authStore.cod_usuario;
-
-                console.log(idUsuario)
-
                 axios.get(this.urlGetUsuario + idUsuario)
                     .then(response => {
                         this.dadosUsuario = response.data;
                     })
                     .catch(error => {
-                        console.error("Erro ao obter os dados do usuário:", error);
+                        console.error("Erro ao obter os dados do usuário");
                     });
             },
             verificarCamposObrigatorios(camposObrigatorios, dadosUsuario) {
@@ -68,22 +62,9 @@
                     return valor !== "" && valor !== undefined && valor !== null;
                 });
             },
-            // verificarSenhas() {
-            //     this.senhasIguais = this.senha === this.confirmacaoSenha;
-            // },
             fecharModal() {
                 this.showModal = false;
             },
-            // async verificarUsuarioExistente() {
-            //     try {
-            //         const response = await axios.get(urlVerificarUsuario, {
-            //             params: { usuario: this.dadosUsuario.usuario }
-            //         });
-            //         this.usuarioExistente = response.data.existe;
-            //     } catch (error) {
-            //         console.error("Erro ao verificar o usuário:", error);
-            //     }
-            // },
             async atualizarUsuario(event) {
                 event.preventDefault();
 
@@ -164,17 +145,55 @@
             </p>
             <form class="pt-5">
                 <div class="columns">
-                    <div class="column">
+                    <div class="column is-5">
                         <label for="nome">
                             Nome*
                         </label>
                         <input id="nome" name="nome" class="mt-1" v-model="dadosUsuario.nome">
                     </div>
-                    <div class="column">
+                    <div class="column is-4">
                         <label for="email">
                             Email*
                         </label>
                         <input id="email" name="email" class="mt-1" v-model="dadosUsuario.email">
+                    </div>
+                    <div class="column is-3">
+                        <label for="cpf">
+                            CPF*
+                        </label>
+                        <input id="cpf" name="cpf" class="mt-1" v-model="dadosUsuario.cpf">
+                    </div>
+                </div>
+                <div class="columns">
+                    <div class="column is-display-flex is-flex-direction-column is-3">
+                        <label for="sexo">
+                            Sexo
+                        </label>
+                        <div class="select mt-1">
+                            <select v-model="dadosUsuario.sexo" id="sexo">
+                                <option value="I">Ignorado</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <label for="telefone">
+                            Telefone (DDD)
+                        </label>
+                        <input id="telefone" name="telefone" class="mt-1" v-model="dadosUsuario.telefone">
+                    </div>
+                    <div class="column is-2">
+                        <label for="cep">
+                            CEP
+                        </label>
+                        <input id="cep" name="cep" class="mt-1" v-model="dadosUsuario.cep">
+                    </div>
+                    <div class="column is-4">
+                        <label for="cidade">
+                            Cidade
+                        </label>
+                        <input id="cidade" name="cidade" class="mt-1" v-model="dadosUsuario.cidade">
                     </div>
                 </div>
                 <div class="columns">
@@ -198,41 +217,11 @@
                     </div>
                 </div>
                 <div class="columns">
-                    <div class="column is-5">
-                        <label for="cpf">
-                            CPF*
-                        </label>
-                        <input id="cpf" name="cpf" class="mt-1" v-model="dadosUsuario.cpf">
-                    </div>
-                    <div class="column is-display-flex is-flex-direction-column is-4">
-                        <label for="sexo">
-                            Sexo
-                        </label>
-                        <div class="select mt-1">
-                            <select v-model="dadosUsuario.sexo" id="sexo">
-                                <option value="I">Ignorado</option>
-                                <option value="M">Masculino</option>
-                                <option value="F">Feminino</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="column is-3">
-                        <label for="telefone">
-                            Telefone (DDD)
-                        </label>
-                        <input id="telefone" name="telefone" class="mt-1" v-model="dadosUsuario.telefone">
-                    </div>
-                </div>
-                <div class="columns">
                     <div class="column is-3">
                         <label for="usuario">
                             Usuário*
                         </label>
                         <input id="usuario" name="usuario" class="mt-1" v-model="dadosUsuario.usuario" disabled>
-                        <!-- <input id="usuario" name="usuario" class="mt-1"
-                            v-model="dadosUsuario.usuario" @blur="verificarUsuarioExistente"
-                        >
-                        <p v-if="usuarioExistente" class="help is-danger">Este usuário já existe.</p> -->
                     </div>
                     <div class="column is-3">
                         <label for="senha">
@@ -245,21 +234,9 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="column is-3">
-                        <label for="comfirmacao-senha">
-                            Confirmar Senha
-                        </label>
-                        <input 
-                            id="confirmacao-senha" 
-                            name="confirmacao-senha" 
-                            type="password" 
-                            class="mt-1"
-                            v-model="confirmacaoSenha"
-                        >
-                    </div> -->
                 </div>
                 <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center my-6">
-                    <button class="btn-cor-principal py-2" @click="atualizarUsuario">
+                    <button class="btn-cor-principal py-3" @click="atualizarUsuario">
                         Atualizar
                     </button>
                 </div>
