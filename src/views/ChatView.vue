@@ -12,7 +12,7 @@
             return {
                 urlConversas: 'http://127.0.0.1:5000/chat/conversas/',
                 urlMensagens: 'http://127.0.0.1:5000/chat/mensagens/',
-                urlReport: 'http://127.0.0.1:5000/chat/report',
+                urlReport: 'http://127.0.0.1:5000/chat/reportar',
                 urlSocket: 'http://localhost:5000',
                 selectedChat: false,
                 newMessage: "",
@@ -22,14 +22,14 @@
                 showReportModal: false,
                 reportData: {
                     description: "",
-                    category: 0,  // categoria padrão
+                    category: 1,  // categoria padrão
                 },
                 reportCategories: [
-                    { value: 0, label: "Spam/Propaganda" },
-                    { value: 1, label: "Assédio" },
-                    { value: 2, label: "Conteúdo Inadequado" },
-                    { value: 3, label: "Tentativa de Golpe" },
-                    { value: 4, label: "Outros" }
+                    { value: 1, label: "Tentativa de Golpe" },
+                    { value: 2, label: "Assédio" },
+                    { value: 3, label: "Conteúdo Inadequado" },
+                    { value: 4, label: "Spam/Propaganda" },
+                    { value: 5, label: "Outros" }
                 ],
             };
         },
@@ -155,11 +155,10 @@
             async submitReport() {
                 try {
                     const reportPayload = {
-                        cod_usuario_reporter: this.authStore.cod_usuario,
-                        cod_usuario_reported: this.selectedChat.id,
-                        description: this.reportData.description,
-                        category: this.reportData.category,
-                        datetime: new Date().toISOString()
+                        cod_usuario: this.authStore.cod_usuario,
+                        cod_conversa: this.selectedChat.id,
+                        descricao: this.reportData.description,
+                        tipo_denuncia: this.reportData.category
                     };
 
                     await axios.post(this.urlReport, reportPayload);
@@ -362,7 +361,6 @@
           </div>
         </div>
       </div>
-      
     </section>
 
     <!-- Modal Denunciar -->    
