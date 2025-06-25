@@ -13,24 +13,18 @@
                 urlConversas: 'http://127.0.0.1:5000/chat/conversas/',
                 urlMensagens: 'http://127.0.0.1:5000/chat/mensagens/',
                 urlReport: 'http://127.0.0.1:5000/chat/reportar',
+                urlTiposDenuncia: 'http://127.0.0.1:5000/chat/reportar/tipos_denuncia',
                 urlSocket: 'http://localhost:5000',
                 selectedChat: false,
                 newMessage: "",
                 socket: null,
                 chats: [],
-
                 showReportModal: false,
+                reportCategories: [],
                 reportData: {
                     description: "",
                     category: 1,  // categoria padrão
                 },
-                reportCategories: [
-                    { value: 1, label: "Tentativa de Golpe" },
-                    { value: 2, label: "Assédio" },
-                    { value: 3, label: "Conteúdo Inadequado" },
-                    { value: 4, label: "Spam/Propaganda" },
-                    { value: 5, label: "Outros" }
-                ],
             };
         },
         methods: {
@@ -152,6 +146,17 @@
                     }
                 });
             },
+            async getTiposDenuncia() {
+                try {
+                    const response = await axios.get(this.urlTiposDenuncia);
+                    this.reportCategories = response.data.map(tipo => ({
+                        value: tipo.id,
+                        label: tipo.descricao
+                    }));
+                } catch (error) {
+                    console.error("Erro ao carregar tipos de denúncia");
+                }
+            },
             async submitReport() {
                 try {
                     const reportPayload = {
@@ -190,6 +195,7 @@
         },
         mounted() {
             this.inicializarSocket();
+            this.getTiposDenuncia();
             this.fetchChats();
 
             // Sidebar Toggle

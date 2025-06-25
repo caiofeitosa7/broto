@@ -23,7 +23,7 @@
         },
         data() {
             return {
-                urlAtualizarUsuario: "http://127.0.0.1:5000//atualizar_usuario",
+                urlAtualizarUsuario: "http://127.0.0.1:5000/atualizar_usuario",
                 urlGetUsuario: 'http://127.0.0.1:5000/get_usuario/',
                 senhaVisivel: false,
                 showModal: false,

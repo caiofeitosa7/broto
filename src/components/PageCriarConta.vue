@@ -325,7 +325,7 @@
                     <div class="column">
                         <label class="checkbox">
                             <input type="checkbox" v-model="formData.aceitaTermos">
-                            Li e aceito os <a href="/termo_compromisso" target="_blank">termos de uso</a>.
+                            Li e aceito os <a href="/termo_compromisso" target="_blank" rel="noopener noreferer">termos de uso</a>.
                         </label>
                         <p v-if="!formData.aceitaTermos && formEnviado" class="help is-danger">
                             Você deve aceitar os termos para continuar.
@@ -363,7 +363,6 @@
     }
 
     #container-form {
-        background-color: #fff;
         position: relative;
         top: -40px;
 

@@ -68,7 +68,6 @@
 
 <style scoped>
     #container-form {
-        background-color: #fff;
         position: relative;
         top: -40px;
 

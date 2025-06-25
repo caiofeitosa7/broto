@@ -34,11 +34,12 @@
                     authStore.login(
                         response.data.user.id, 
                         response.data.user.nome,
-                        response.data.favoritos
+                        response.data.user.favoritos || []
                     );
-                    router.push({ name: "home" });
+                    router.push(router.currentRoute.value.query.redirect || { name: "home" });
                 } catch (error) {
-                    erro.value = error.response?.data?.message || "Erro ao realizar login";
+                    const msg = error.response?.data?.message || error.response?.data?.error || "Erro ao realizar login";
+                    erro.value = msg;
                 }
             };
 
@@ -192,7 +193,6 @@
     }
 
     #container-form {
-        background-color: #fff;
         position: relative;
         top: -40px;
 
