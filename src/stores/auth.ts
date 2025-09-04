@@ -13,7 +13,7 @@ export const useAuthStore = defineStore("auth", {
         getUserName: (state) => state.nome_usuario,
     },
     actions: {
-        login(codigo, nome, favoritos) {
+        login(codigo: number, nome: string, favoritos: any[]) {
             this.cod_usuario = codigo;
             this.nome_usuario = nome;
             this.favoritos = favoritos;
@@ -26,7 +26,5 @@ export const useAuthStore = defineStore("auth", {
             this.favoritos = [];
         },
     },
-    persist: {
-        enabled: true,
-    },
+    persist: true,
 });

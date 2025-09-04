@@ -1,7 +1,7 @@
 <script>
     // import ModalCadastrarPlanta from '../components/ModalCadastrarPlanta.vue'
     import ModalMensagem from '../components/ModalMensagem.vue'
-    import Menu from '../components/menuSuperior.vue'
+    import Menu from '../components/MenuSuperior.vue'
     import RodaPe from '../components/RodaPe.vue'
     import { useAuthStore } from "@/stores/auth";
     import axios from "axios";

@@ -1,5 +1,5 @@
 <script>
-    import Menu from '../components/menuSuperior.vue'
+    import Menu from '../components/MenuSuperior.vue'
     import RodaPe from '../components/RodaPe.vue'
     import { useAuthStore } from "@/stores/auth";
     import { useRouter } from "vue-router";

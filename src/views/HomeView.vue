@@ -1,325 +1,410 @@
-<script>
-    import ModalMensagem from '../components/ModalMensagem.vue'
-    import Menu from '../components/menuSuperior.vue'
-    import RodaPe from '../components/RodaPe.vue'
-    import { useAuthStore } from "@/stores/auth";
-    import axios from "axios";
+<script lang="ts">
+import { defineComponent, ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import ModalMensagem from '../components/ModalMensagem.vue'
+import Menu from '../components/MenuSuperior.vue'
+import RodaPe from '../components/RodaPe.vue'
+import { useAuthStore } from "@/stores/auth";
+import axios from "axios";
 
-    export default {
-        components: {
-            ModalMensagem,
-            Menu,
-            RodaPe
-        },
-        setup() {
-            const authStore = useAuthStore();
-            return { authStore };
-        },
-        data() {
-            return {
-                urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
-                urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
-                urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes',
-                urlFiltrarPubCategoria: 'http://127.0.0.1:5000/publicacoes_categoria',
-                urlFiltrarPubPlanta: 'http://127.0.0.1:5000/publicacoes_planta',
-                urlAddFavorito: 'http://127.0.0.1:5000/favoritos/adicionar',
-                urlRemoveFavorito: 'http://127.0.0.1:5000/favoritos/remover',
-                urlAbrirConversa: 'http://127.0.0.1:5000/publicacao/contactar',
-                urlCategorias: 'http://127.0.0.1:5000/categorias',
-                carregando: false,
-                showModal: false,
-                tituloModal: "",
-                conteudoModal: "",
-                visibleCategories: [],
-                categorias: [],
-                itemsPerPage: 0,
-                currentIndex: 0,
-                showModalCadastrarPublicacao: false,
-                showModalVerPublicacao: false,
-                showModalProcurar: false,
-                fotoCarregada: false,
-                fotoPreview: null,
-                publicacaoClicada: {},
-                plantasEncontradas: [],
-                idPlantaBuscada: null,
-                plantaBuscada: {},
-                mensagemErro: "",
-                nomePlantaProcurar: "",
-                mostrarSelectPlanta: false,
-                publicacoes: [],
-                filtroAtivo: null,
-                tipoFiltroAtivo: null,
-                showButtonCarregarMais: true,
-                limite: 16,  // Quantidade de publicações por vez
-                offset: 0,  // Posição inicial
-            };
-        },
-        methods: {
-            closeModal() {
-                this.showModalVerPublicacao = false;
-                this.showModal = false;
-            },
-            closeModalCadastrarPublicacao() {
-                this.showModalCadastrarPublicacao = false;
-                this.fotoCarregada = false;
-                this.plantaBuscada = {};
-            },
-            openModalCadastrarPublicacao() {
-                this.showModalCadastrarPublicacao = true;
-            },
-            abrirModalProcurar() {
-                this.showModalProcurar = true;
-            },
-            closeModalProcurar() {
-                this.showModalProcurar = false;
-                // this.nomePlantaProcurar = "";
-            },
-            abrirInputFoto() {
-                document.getElementById("input-foto").click()
-            },
-            async carregarPublicacoes(string=null, tipo_filtro=null) {
-                if (this.carregando) return;
+interface Categoria {
+    nome: string;
+}
 
-                this.carregando = true;
-                try {
-                    let url = this.urlCarregarPublicacoes;
-                    
-                    // Se houver um filtro, ajusta a URL da requisição
-                    if (string && tipo_filtro) {
-                        this.filtroAtivo = string;
-                        this.tipoFiltroAtivo = tipo_filtro;
-                        url = tipo_filtro === 'categoria' ? this.urlFiltrarPubCategoria : this.urlFiltrarPubPlanta;
-                        url += `/${string}`;
-                    }
+interface Planta {
+    id: number;
+    nome: string;
+    nome_cientifico: string;
+}
 
-                    // Adiciona os parâmetros de paginação
-                    url += `?limit=${this.limite}&offset=${this.offset}`;
-                    const response = await axios.get(url);
+interface Usuario {
+    id: number;
+    nome: string;
+    bairro: string;
+    numero: string;
+}
 
-                    if (response.data) {
-                        if (this.offset === 0) {
-                            this.publicacoes = response.data;  // Se for uma nova busca, substitui os dados
-                        } else {
-                            this.publicacoes.push(...response.data);  // Caso contrário, adiciona os novos resultados
-                        }
-                        this.offset += this.limite;
-                    }
+interface Foto {
+    imagem_base64: string;
+}
 
-                    if (response.data.length == 0)
-                        this.showButtonCarregarMais = false;
-                    else
-                        this.showButtonCarregarMais = true;
-
-                } catch (error) {
-                    console.error("Erro ao carregar publicações.");
-                } finally {
-                    this.carregando = false;
-                }
-            },
-            async getCategorias() {
-                try {
-                    const response = await fetch(this.urlCategorias);
-
-                    if (!response.ok) {
-                        throw new Error("Erro ao buscar as espécies");
-                    }
-
-                    this.categorias = await response.json().then((data) => data.map((item) => item.nome));
-                    this.updateItemsPerPage();
-                } catch (error) {
-                    console.error("Erro ao buscar espécies.");
-                }
-            },
-            updateItemsPerPage() {
-                const containerWidth = document.querySelector(".container-categorias").offsetWidth;
-                this.itemsPerPage = Math.floor(containerWidth / 100);
-                this.visibleCategories = this.categorias.slice(
-                    this.currentIndex,
-                    this.currentIndex + this.itemsPerPage
-                );
-            },
-            scrollLeft() {
-                if (this.currentIndex > 0) {
-                    this.currentIndex -= 2;
-                    this.updateItemsPerPage();
-                }
-            },
-            scrollRight() {
-                if (this.currentIndex + this.itemsPerPage < this.categorias.length) {
-                    this.currentIndex += 2;
-                    this.updateItemsPerPage();
-                }
-            },
-            confirmarPlanta() {
-                if (!this.idPlantaBuscada) {
-                    this.mensagemErro = 'Por favor, selecione uma planta.';
-                    return;
-                }
-
-                const planta = this.plantasEncontradas.find(
-                    (p) => p.id === this.idPlantaBuscada[0]
-                );
-
-                if (planta) {
-                    this.plantaBuscada = {
-                        id: planta.id,
-                        nome_popular: planta.nome,
-                        nome_cientifico: planta.nome_cientifico,
-                    };
-
-                    this.closeModalProcurar();
-                } else {
-                    console.error('Nenhuma planta foi selecionada.');
-                    this.mensagemErro = 'Por favor, selecione uma planta.';
-                }
-            },
-            async buscarPlantas() {
-                if (this.nomePlantaProcurar.length < 3) {
-                    this.mensagemErro = "Digite pelo menos 3 letras.";
-                    return;
-                }
-
-                try {
-                    const response = await axios.get(this.urlBuscarPlanta, {
-                        params: { query: this.nomePlantaProcurar }
-                    });
-
-                    if (response.data.length) {
-                        this.plantasEncontradas = response.data;
-                        this.mensagemErro = "";
-                    } else {
-                        this.plantasEncontradas = [];
-                        this.mensagemErro = "Nenhuma planta foi encontrada.";
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar plantas.");
-                    this.mensagemErro = "Erro ao buscar plantas. Tente novamente.";
-                }
-            },
-            previewFile(event) {
-                const file = event.target.files[0];
-
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.fotoPreview = e.target.result;
-                        this.fotoCarregada = true;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            },
-            async cadastrarPublicacao() {
-                let dados = {
-                    usuario_id: this.authStore.cod_usuario,
-                    planta_id: this.plantaBuscada.id,
-                    imagem: document.getElementById('foto-preview').src,
-                    quantidade: document.getElementById('quatidade-mudas').value
-                }
-
-                try {
-                    const response = await axios.post(this.urlCadastrarPublicacao, dados, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
-
-                    if (response.status === 200) {
-                        this.closeModalCadastrarPublicacao();
-                        this.tituloModal = "Sucesso";
-                        this.conteudoModal = "Publicação cadastrada com sucesso!";
-                        this.showModal = true;
-                    } else {
-                        this.tituloModal = "Erro";
-                        this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
-                        this.showModal = true;
-                    }
-                } catch (error) {
-                    console.error("Erro ao cadastrar planta.");
-                    this.tituloModal = "Erro";
-                    this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
-                    this.showModal = true;
-                }
-            },
-            async openModalVerPublicacao(id, idDono, nomeDono, nomeComum, nomeCientifico, local, quantidade, foto, numero) {
-                this.showModalVerPublicacao = true;
-                this.publicacaoClicada = {
-                    'id': id,
-                    'idDono': idDono,
-                    'nomeDono': nomeDono,
-                    'nomeComum': nomeComum,
-                    'nomeCientifico': nomeCientifico,
-                    'quantidade': quantidade,
-                    'contato': numero,
-                    'local': local,
-                    'foto': foto
-                }
-            },
-            async toggleFavorito(event, id) {
-                const icon = event.target;
-                let url = '';
-
-                if (icon.classList.contains('bi-heart')) {
-                    icon.classList.replace('bi-heart', 'bi-heart-fill');
-                    url = this.urlAddFavorito;
-                } else {
-                    icon.classList.replace('bi-heart-fill', 'bi-heart');
-                    url = this.urlRemoveFavorito;
-                }
-
-                try {
-                    const response = await axios.post(url, {
-                        usuario_id: this.authStore.cod_usuario,
-                        publicacao_id: id
-                    });
-                } catch (error) {
-                    console.error('Erro ao favoritar.');
-                }
-            },
-            abrirConversa(id) {
-                let usuario_id = this.authStore.cod_usuario;
-
-                axios.post(this.urlAbrirConversa, {
-                    usuario_id: usuario_id,
-                    publicacao_id: id
-                }).then((res) => {
-                    const conversaId = res.data.conversa_id;
-
-                    if (conversaId) {
-                        this.$router.push({ path: '/chat', query: { conversa: conversaId } });
-                    }
-                }).catch((error) => {
-                    console.error("Erro ao abrir conversa.");
-                });
-            },
-            irParaPublicacoesUsuario(usuario_id) {
-                this.$router.push({ name: 'publicacoes_usuario', query: { usuario_id } });
-            }
-        },
-        computed: {
-            gruposDePlantas() {
-                return this.publicacoes.reduce((acc, publicacao, index) => {
-                    const grupoIndex = Math.floor(index / 4);
-                    if (!acc[grupoIndex]) acc[grupoIndex] = [];
-                    acc[grupoIndex].push(publicacao);
-                    return acc;
-                }, []);
-            },
-            // publicacoesComFavoritos() {
-            //     return this.publicacoes.map(pub => ({
-            //         ...pub,
-            //         favorita: this.authStore.favoritos.includes(pub.id) // Verifica se o ID está na lista de favoritos
-            //     }));
-            // }
-        },
-        mounted() {
-            this.getCategorias();
-            this.carregarPublicacoes();
-            window.addEventListener("resize", this.updateItemsPerPage);
-        },
-        beforeUnmount() {
-            window.removeEventListener("resize", this.updateItemsPerPage);
-        },
+interface Publicacao {
+    id: number;
+    usuario: Usuario;
+    planta: {
+        nome_popular: string;
+        nome_cientifico: string;
     };
+    quantidade: number;
+    foto: Foto;
+}
+
+interface PublicacaoClicada {
+    id?: number;
+    idDono?: number;
+    nomeDono?: string;
+    nomeComum?: string;
+    nomeCientifico?: string;
+    quantidade?: number;
+    contato?: string;
+    local?: string;
+    foto?: string;
+}
+
+export default defineComponent({
+    components: {
+        ModalMensagem,
+        Menu,
+        RodaPe
+    },
+    setup() {
+        const authStore = useAuthStore();
+
+        // Reactive state
+        const state = reactive({
+            urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
+            urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
+            urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes',
+            urlFiltrarPubCategoria: 'http://127.0.0.1:5000/publicacoes_categoria',
+            urlFiltrarPubPlanta: 'http://127.0.0.1:5000/publicacoes_planta',
+            urlAddFavorito: 'http://127.0.0.1:5000/favoritos/adicionar',
+            urlRemoveFavorito: 'http://127.0.0.1:5000/favoritos/remover',
+            urlAbrirConversa: 'http://127.0.0.1:5000/publicacao/contactar',
+            urlCategorias: 'http://127.0.0.1:5000/categorias',
+            carregando: false,
+            showModal: false,
+            tituloModal: "",
+            conteudoModal: "",
+            visibleCategories: [] as string[],
+            categorias: [] as string[],
+            itemsPerPage: 0,
+            currentIndex: 0,
+            showModalCadastrarPublicacao: false,
+            showModalVerPublicacao: false,
+            showModalProcurar: false,
+            fotoCarregada: false,
+            fotoPreview: null as string | null,
+            publicacaoClicada: {} as PublicacaoClicada,
+            plantasEncontradas: [] as Planta[],
+            idPlantaBuscada: null as number[] | null,
+            plantaBuscada: {} as { id?: number; nome_popular?: string; nome_cientifico?: string },
+            mensagemErro: "",
+            nomePlantaProcurar: "",
+            mostrarSelectPlanta: false,
+            publicacoes: [] as Publicacao[],
+            filtroAtivo: null as string | null,
+            tipoFiltroAtivo: null as string | null,
+            showButtonCarregarMais: true,
+            limite: 16,
+            offset: 0,
+        });
+
+        // Computed
+        const gruposDePlantas = computed(() => {
+            return state.publicacoes.reduce((acc: Publicacao[][], publicacao, index) => {
+                const grupoIndex = Math.floor(index / 4);
+                if (!acc[grupoIndex]) acc[grupoIndex] = [];
+                acc[grupoIndex].push(publicacao);
+                return acc;
+            }, []);
+        });
+
+        // Methods
+        function closeModal() {
+            state.showModalVerPublicacao = false;
+            state.showModal = false;
+        }
+        function closeModalCadastrarPublicacao() {
+            state.showModalCadastrarPublicacao = false;
+            state.fotoCarregada = false;
+            state.plantaBuscada = {};
+        }
+        function openModalCadastrarPublicacao() {
+            state.showModalCadastrarPublicacao = true;
+        }
+        function abrirModalProcurar() {
+            state.showModalProcurar = true;
+        }
+        function closeModalProcurar() {
+            state.showModalProcurar = false;
+        }
+        function abrirInputFoto() {
+            const inputElement = document.getElementById("input-foto") as HTMLInputElement | null;
+            if (inputElement) {
+                inputElement.click();
+            }
+        }
+        async function carregarPublicacoes(string: string | null = null, tipo_filtro: string | null = null) {
+            if (state.carregando) return;
+
+            state.carregando = true;
+            try {
+                let url = state.urlCarregarPublicacoes;
+
+                // Se houver um filtro, ajusta a URL da requisição
+                if (string && tipo_filtro) {
+                    state.filtroAtivo = string;
+                    state.tipoFiltroAtivo = tipo_filtro;
+                    url = tipo_filtro === 'categoria' ? state.urlFiltrarPubCategoria : state.urlFiltrarPubPlanta;
+                    url += `/${string}`;
+                }
+
+                // Adiciona os parâmetros de paginação
+                url += `?limit=${state.limite}&offset=${state.offset}`;
+                const response = await axios.get(url);
+
+                if (response.data) {
+                    if (state.offset === 0) {
+                        state.publicacoes = response.data;
+                    } else {
+                        state.publicacoes.push(...response.data);
+                    }
+                    state.offset += state.limite;
+                }
+
+                if (response.data.length == 0)
+                    state.showButtonCarregarMais = false;
+                else
+                    state.showButtonCarregarMais = true;
+
+            } catch (error) {
+                console.error("Erro ao carregar publicações.");
+            } finally {
+                state.carregando = false;
+            }
+        }
+        async function getCategorias() {
+            try {
+                const response = await fetch(state.urlCategorias);
+
+                if (!response.ok) {
+                    throw new Error("Erro ao buscar as espécies");
+                }
+
+                const data: Categoria[] = await response.json();
+                state.categorias = data.map((item) => item.nome);
+                updateItemsPerPage();
+            } catch (error) {
+                console.error("Erro ao buscar espécies.");
+            }
+        }
+        function updateItemsPerPage() {
+            nextTick(() => {
+                const container = document.querySelector(".container-categorias") as HTMLElement | null;
+                if (!container) return;
+                state.itemsPerPage = Math.floor(container.offsetWidth / 100);
+                state.visibleCategories = state.categorias.slice(
+                    state.currentIndex,
+                    state.currentIndex + state.itemsPerPage
+                );
+            });
+        }
+        function scrollLeft() {
+            if (state.currentIndex > 0) {
+                state.currentIndex -= 2;
+                updateItemsPerPage();
+            }
+        }
+        function scrollRight() {
+            if (state.currentIndex + state.itemsPerPage < state.categorias.length) {
+                state.currentIndex += 2;
+                updateItemsPerPage();
+            }
+        }
+        function confirmarPlanta() {
+            if (!state.idPlantaBuscada || state.idPlantaBuscada.length === 0) {
+                state.mensagemErro = 'Por favor, selecione uma planta.';
+                return;
+            }
+
+            const planta = state.plantasEncontradas.find(
+                (p) => p.id === state.idPlantaBuscada![0]
+            );
+
+            if (planta) {
+                state.plantaBuscada = {
+                    id: planta.id,
+                    nome_popular: planta.nome,
+                    nome_cientifico: planta.nome_cientifico,
+                };
+
+                closeModalProcurar();
+            } else {
+                console.error('Nenhuma planta foi selecionada.');
+                state.mensagemErro = 'Por favor, selecione uma planta.';
+            }
+        }
+        async function buscarPlantas() {
+            if (state.nomePlantaProcurar.length < 3) {
+                state.mensagemErro = "Digite pelo menos 3 letras.";
+                return;
+            }
+
+            try {
+                const response = await axios.get(state.urlBuscarPlanta, {
+                    params: { query: state.nomePlantaProcurar }
+                });
+
+                if (response.data.length) {
+                    state.plantasEncontradas = response.data;
+                    state.mensagemErro = "";
+                } else {
+                    state.plantasEncontradas = [];
+                    state.mensagemErro = "Nenhuma planta foi encontrada.";
+                }
+            } catch (error) {
+                console.error("Erro ao buscar plantas.");
+                state.mensagemErro = "Erro ao buscar plantas. Tente novamente.";
+            }
+        }
+        function previewFile(event: Event) {
+            const target = event.target as HTMLInputElement;
+            const file = target.files && target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    state.fotoPreview = e.target?.result as string;
+                    state.fotoCarregada = true;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        async function cadastrarPublicacao() {
+            const fotoPreviewEl = document.getElementById('foto-preview') as HTMLImageElement | null;
+            const quantidadeEl = document.getElementById('quatidade-mudas') as HTMLInputElement | null;
+
+            let dados = {
+                usuario_id: authStore.cod_usuario,
+                planta_id: state.plantaBuscada.id,
+                imagem: fotoPreviewEl?.src || '',
+                quantidade: quantidadeEl?.value || ''
+            }
+
+            try {
+                const response = await axios.post(state.urlCadastrarPublicacao, dados, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (response.status === 200) {
+                    closeModalCadastrarPublicacao();
+                    state.tituloModal = "Sucesso";
+                    state.conteudoModal = "Publicação cadastrada com sucesso!";
+                    state.showModal = true;
+                } else {
+                    state.tituloModal = "Erro";
+                    state.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
+                    state.showModal = true;
+                }
+            } catch (error) {
+                console.error("Erro ao cadastrar planta.");
+                state.tituloModal = "Erro";
+                state.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
+                state.showModal = true;
+            }
+        }
+        async function openModalVerPublicacao(
+            id: number,
+            idDono: number,
+            nomeDono: string,
+            nomeComum: string,
+            nomeCientifico: string,
+            local: string,
+            quantidade: number,
+            foto: string,
+            numero: string
+        ) {
+            state.showModalVerPublicacao = true;
+            state.publicacaoClicada = {
+                id,
+                idDono,
+                nomeDono,
+                nomeComum,
+                nomeCientifico,
+                quantidade,
+                contato: numero,
+                local,
+                foto
+            }
+        }
+        async function toggleFavorito(event: MouseEvent, id: number) {
+            const icon = event.target as HTMLElement;
+            let url = '';
+
+            if (icon.classList.contains('bi-heart')) {
+                icon.classList.replace('bi-heart', 'bi-heart-fill');
+                url = state.urlAddFavorito;
+            } else {
+                icon.classList.replace('bi-heart-fill', 'bi-heart');
+                url = state.urlRemoveFavorito;
+            }
+
+            try {
+                await axios.post(url, {
+                    usuario_id: authStore.cod_usuario,
+                    publicacao_id: id
+                });
+            } catch (error) {
+                console.error('Erro ao favoritar.');
+            }
+        }
+        function abrirConversa(id: number) {
+            let usuario_id = authStore.cod_usuario;
+
+            axios.post(state.urlAbrirConversa, {
+                usuario_id: usuario_id,
+                publicacao_id: id
+            }).then((res) => {
+                const conversaId = res.data.conversa_id;
+
+                if (conversaId) {
+                    window.location.href = `/chat?conversa=${conversaId}`;
+                }
+            }).catch((error) => {
+                console.error("Erro ao abrir conversa.");
+            });
+        }
+        function irParaPublicacoesUsuario(usuario_id: number) {
+            window.location.href = `/publicacoes_usuario?usuario_id=${usuario_id}`;
+        }
+
+        // Lifecycle
+        onMounted(() => {
+            getCategorias();
+            carregarPublicacoes();
+            window.addEventListener("resize", updateItemsPerPage);
+        });
+        onBeforeUnmount(() => {
+            window.removeEventListener("resize", updateItemsPerPage);
+        });
+
+        return {
+            ...state,
+            authStore,
+            closeModal,
+            closeModalCadastrarPublicacao,
+            openModalCadastrarPublicacao,
+            abrirModalProcurar,
+            closeModalProcurar,
+            abrirInputFoto,
+            carregarPublicacoes,
+            getCategorias,
+            updateItemsPerPage,
+            scrollLeft,
+            scrollRight,
+            confirmarPlanta,
+            buscarPlantas,
+            previewFile,
+            cadastrarPublicacao,
+            openModalVerPublicacao,
+            toggleFavorito,
+            abrirConversa,
+            irParaPublicacoesUsuario,
+            gruposDePlantas
+        };
+    }
+});
 </script>
 
 <template>
