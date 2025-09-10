@@ -124,12 +124,12 @@
                     const response = await axios.post(this.urlAddUsuario, this.formData);
 
                     this.titleModal = "Sucesso!";
-                    this.contentModal = "Cadastro realizado com sucesso.";
+                    this.contentModal = "Cadastro realizado! Verifique seu email.";
                     this.showModal = true;
 
                     setTimeout(() => {
                         this.router.push({ name: "login" });
-                    }, 2000);
+                    }, 3000);
                     
                 } catch (error) {
                     this.titleModal = "Erro!";
@@ -150,7 +150,7 @@
                         this.formData.cidade = data.city || '';
                         
                     } catch (error) {
-                        console.error("Erro ao buscar CEP:", error);
+                        console.error("Erro ao buscar CEP");
                         this.titleModal = "Erro!";
                         this.contentModal = "CEP não encontrado ou inválido.";
                         this.showModal = true;
@@ -160,11 +160,9 @@
             verificarCidadePermitida(cep) {
                 const cepNum = parseInt(cep.replace(/\D/g, '').substring(0, 5));
 
-                console.log("faixa de ceps armazenados", this.faixa_ceps_aceitos);
-
                 for (const [inicio, fim, cidade] of this.faixa_ceps_aceitos) {
                     if (cepNum >= inicio && cepNum <= fim) {
-                        console.log("cep permitido", cepNum >= inicio && cepNum <= fim);
+                        // console.log("cep permitido", cepNum >= inicio && cepNum <= fim);
                         return { permitido: true, cidade: cidade };
                     }
                 }
@@ -172,12 +170,10 @@
             },
             async buscarCidadesPermitidas() {
                 try {
-                    console.log("Buscando cidades permitidas...");
                     const response = await axios.get(this.urlGetCidadesPermitidas);
                     this.faixa_ceps_aceitos = response.data;
-                    console.log("Cidades permitidas:", this.faixa_ceps_aceitos);
                 } catch (error) {
-                    console.error("Erro ao buscar cidades permitidas:", error);
+                    console.error("Erro ao buscar cidades permitidas");
                     this.faixa_ceps_aceitos = [];
                 }
             },

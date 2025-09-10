@@ -59,6 +59,9 @@
             abrirConversa(id) {
                 let usuario_id = this.authStore.cod_usuario;
 
+                if (!usuario_id)
+                    window.location.href = '/login';
+
                 axios.post(this.urlAbrirConversa, {
                     usuario_id: usuario_id,
                     publicacao_id: id

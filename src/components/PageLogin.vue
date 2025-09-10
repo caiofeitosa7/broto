@@ -92,7 +92,7 @@
 
         <div v-if="!esqueceuSenha" id="container-form" class="is-flex is-flex-direction-column is-align-items-center">
             <a class="logo pb-3" href="/">
-                <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="50px" height="50px"/>
+                <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="65px" height="65px"/>
             </a>
             <form @submit.prevent="realizarLogin">
                 <p class="has-text-centered pb-1">

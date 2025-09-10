@@ -80,6 +80,7 @@
         display: none;
         align-items: center;
         justify-content: center;
+        z-index: 7;
         color: #2d232e;
         line-height: 1.5;
         font-family: "Outfit", sans-serif;
