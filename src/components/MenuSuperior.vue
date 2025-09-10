@@ -1,66 +1,159 @@
-<script setup>
+<script>
+    import { useAuthStore } from "@/stores/auth";
+    import { useRouter } from "vue-router";
+    import axios from "axios";
+
+    export default {
+        setup() {
+            const router = useRouter();
+            const authStore = useAuthStore();
+
+            return {
+                router,
+                authStore,
+            };
+        },
+        data() {
+            return {
+                urlLogout: "http://localhost:5000/logout",
+                nome_pesquisado: "",
+                showDropdown: false,
+                menuVisivel: false,
+            }
+        },
+        emits: ['barraPesquisa'],
+        props: {
+            exibirPesquisa: {
+                type: Boolean,
+                default: true
+            }
+        },
+        methods: {
+            async realizarPesquisa() {
+                this.$emit('barraPesquisa', this.nome_pesquisado, 'pesquisa');
+            },
+            async logout() {
+                try {
+                    const response = await axios.get(this.urlLogout);
+                    this.authStore.logout();
+                    this.showDropdown = false;
+                    this.router.push({ name: "login" });
+                } catch (error) {
+                    console.error("Erro ao verificar o usuário");
+                }
+            },
+            verificarEnter(event) {
+                if (event.key === "Enter") {
+                    this.realizarPesquisa();
+                }
+            },
+            toggleMenu() {
+                this.menuVisivel = !this.menuVisivel;
+            },
+            toggleDropdown() {
+                this.showDropdown = !this.showDropdown;
+            },
+            closeDropdown(event) {
+                if (!this.$el.contains(event.target)) {
+                    this.showDropdown = false;
+                }
+            },
+        },
+        mounted() {
+            document.addEventListener('click', this.closeDropdown);
+        },
+        beforeDestroy() {
+            document.removeEventListener('click', this.closeDropdown);
+        },
+    };
 </script>
 
 <template>
-    <nav class="container is-flex is-justify-content-space-between is-align-items-center px-3 py-2">
-        <div class="logo">
-            <div></div>
-        </div>
-        <div class="px-5 container-pesquisar">
-            <div class="campo-input px-4 py-2">
-                <input id="pesquisa" placeholder="Qual planta deseja?">
-                <i class="bi bi-search is-clickable"></i>
+    <nav>
+        <div class="container is-flex is-justify-content-space-between is-align-items-center px-3 py-2">
+            <a class="logo" href="/">
+                <img class="image" src="@/assets/images/broto-1.3.png" alt="Logo do Broto" width="35px" height="35px"/>
+            </a>
+            <div v-if="exibirPesquisa" class="px-2 container-pesquisar">
+                <div class="campo-input px-4 py-2">
+                    <input id="pesquisa" 
+                        v-model="nome_pesquisado" 
+                        @keyup.enter="verificarEnter" 
+                        placeholder="Qual planta deseja?"
+                        class="is-size-7"
+                    >
+                    <i class="bi bi-search is-clickable" @click="realizarPesquisa"></i>
+                </div>
             </div>
-        </div>
-        <div class="is-flex is-align-items-center">
-            <router-link class="is-size-7 mr-4" to="/entrar">
-                Login
-            </router-link>
-            <!-- <div class="is-clickable is-size-5 mr-4">
-                <i class="bi bi-chat-text"></i>
-            </div> -->
-            <div class="is-clickable is-size-5 mr-4">
-                <i class="bi bi-heart"></i>
+            <div id="menu-desktop" class="is-flex is-align-items-center">
+                <router-link v-if="!this.authStore.autenticado" class="is-size-7 mr-4" to="/login">
+                    Entrar
+                </router-link>
+                <a v-if="this.authStore.autenticado" class="is-size-5 is-clickable mr-4" href="/">
+                    <i class="bi bi-house"></i>
+                </a>
+                <router-link v-if="this.authStore.autenticado" to="/chat" class="is-clickable is-size-5 mr-4">
+                    <i class="bi bi-chat-text"></i>
+                </router-link>
+                <router-link to="/meus_favoritos" class="is-clickable is-size-5 mr-4">
+                    <i class="bi bi-heart"></i>
+                </router-link>
+
+                <!------------ Menu Dropdown ----------->
+                <div class="is-size-4 is-relative">
+                    <i class="bi bi-person-fill is-clickable" @click="toggleDropdown"></i>
+                    <div v-show="showDropdown" class="menu-dropdown">
+                        <ul class="is-size-6">
+                            <router-link to="/perfil">
+                                <li>Perfil</li>
+                            </router-link>
+                            <router-link to="/minhas_publicacoes">
+                                <li>Publicações</li>
+                            </router-link>
+                            <li v-if="this.authStore.autenticado" @click="logout">
+                                Sair
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <router-link class="is-size-4" to="/">
-                <i class="bi bi-person-fill"></i>
-            </router-link>
+            <img @click="toggleMenu" id="icone-menu" class="is-clickable" src="@/assets/images/icon-menu.png">
+        </div>
+        <div v-if="menuVisivel" id="menu-mobile" class="is-flex is-align-items-center is-justify-content-center pt-4">
+            <ul>
+                <a class="is-clickable" href="/">
+                    <li>HOME</li>
+                </a>
+                <router-link class="is-clickable" to="/meus_favoritos">
+                    <li>FAVORITOS</li>
+                </router-link>
+                <router-link class="is-clickable" to="/minhas_publicacoes">
+                    <li>PUBLICAÇÕES</li>
+                </router-link>
+                <router-link class="is-clickable" to="/perfil">
+                    <li>PERFIL</li>
+                </router-link>
+                <router-link class="is-clickable" to="/chat">
+                    <li>CHAT</li>
+                </router-link>
+                <li class="is-clickable" v-if="this.authStore.autenticado" @click="logout">
+                    SAIR
+                </li>
+                <li class="is-clickable" v-if="!this.authStore.autenticado" @click="logout">
+                    LOGIN
+                </li>
+            </ul>
         </div>
     </nav>
-    <div>
-        <div class="banner">
-            <h2 class="has-text-white is-size-4 px-3">
-                DOE MUDAS, SEMEIE O FUTURO.
-            </h2>
-        </div>
-        <ul class="nav-especies is-flex is-justify-content-center is-align-items-center py-4 px-2">
-            <div class="container is-flex is-justify-content-space-between is-align-items-center px-3">
-                <i class="bi bi-chevron-left is-size-5 is-clickable px-2"></i>
-                <li>PALMEIRAS</li>
-                <li>FRUTÍFERAS</li>
-                <li>HERBÁCEAS</li>
-                <li>ARBUSTOS</li>
-                <li>BAMBUS</li>
-                <!-- <li>ORNAMENTAIS</li>
-                <li>TREPADEIRAS</li>
-                <li>FLORES</li>
-                <li>TEMPEROS</li>
-                <li>SUCULENTAS</li> -->
-                <i class="bi bi-chevron-right is-size-5 is-clickable px-2"></i>
-            </div>
-        </ul>
-    </div>
 </template>
 
 <style scoped>
-    .logo div:first-child {
-        border-radius: 50%;
-        height: 35px;
-        width: 35px;
-    }
-
-    .logo div:first-child {
-        background-color: var(--cor-principal);
+    nav {
+        position: sticky;
+        top: 0; /* Fixa o elemento no topo ao rolar */
+        z-index: 10; /* Garante que o elemento esteja acima de outros */
+        background-color: white; /* Evita sobreposição transparente */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: adiciona um efeito de sombra */
     }
 
     .container-pesquisar {
@@ -84,33 +177,78 @@
         }
     }
 
-    .banner {
-        background-image: url('@/assets/images/banner_inicio2.jpg');
-        background-size: cover;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 180px;
+    #menu-mobile {
+        top: 48px;
+        z-index: 2;
+        position: sticky;
+        background-color: #fff;
+    }
 
-        h2 {
-            font-family: "Aboreto", system-ui;
-            line-height: normal;
+    #menu-mobile li {
+        text-align: center;
+        margin-bottom: 17px;
+    }
+
+    #icone-menu {
+        max-width: 25px;
+    }
+
+    .menu-dropdown {
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        background-color: white;
+        position: absolute;
+        border-radius: 4px;
+        min-width: 150px;
+        padding: 10px;
+        z-index: 20;
+        top: 100%; /* Alinha abaixo do ícone */
+        right: 0;
+    }
+
+    .menu-dropdown ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .menu-dropdown ul li {
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+    .menu-dropdown ul li:hover {
+        background-color: #f5f5f5;
+    }
+
+
+    /* ---------------------------------------------------------- */
+
+
+    @media screen and (min-width: 769px) {
+        #icone-menu{
+            display: none !important;
         }
     }
 
-    .nav-especies {
-        background-color: #f3f3f3;
-        /* font-family: "Noto Serif"; */
-/* 
-        div {
-            wid
-        } */
+    @media screen and (max-width: 768px) {
+        #menu-desktop{
+            display: none !important;
+        }
+    }
 
-        li {
-            border-bottom: 3px solid #81b5b0;
-            padding-bottom: 3px;
-            font-weight: 500;
-            cursor: pointer;
+    @media screen and (min-width: 421px) {
+        #pesquisa{
+            max-width: auto;
+        }
+    }
+
+    @media screen and (max-width: 420px) {
+        .container-pesquisar {
+            width: auto;
+        }
+
+        #pesquisa{
+            max-width: 130px;
         }
     }
 

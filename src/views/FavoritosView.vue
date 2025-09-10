@@ -1,6 +1,7 @@
 <script>
+    // import ModalCadastrarPlanta from '../components/ModalCadastrarPlanta.vue'
     import ModalMensagem from '../components/ModalMensagem.vue'
-    import Menu from '../components/menuSuperior.vue'
+    import Menu from '../components/MenuSuperior.vue'
     import RodaPe from '../components/RodaPe.vue'
     import { useAuthStore } from "@/stores/auth";
     import axios from "axios";
@@ -19,22 +20,26 @@
             return {
                 urlBuscarPlanta: 'http://127.0.0.1:5000/buscar_planta',
                 urlCadastrarPublicacao: 'http://127.0.0.1:5000/registrar_publicacao',
-                urlCarregarPublicacoes: 'http://127.0.0.1:5000/publicacoes',
+                urlCarregarPublicacoes: 'http://127.0.0.1:5000/favoritos/listar/',
                 urlFiltrarPubCategoria: 'http://127.0.0.1:5000/publicacoes_categoria',
                 urlFiltrarPubPlanta: 'http://127.0.0.1:5000/publicacoes_planta',
+                urlAbrirConversa: 'http://127.0.0.1:5000/publicacao/contactar',
                 urlAddFavorito: 'http://127.0.0.1:5000/favoritos/adicionar',
                 urlRemoveFavorito: 'http://127.0.0.1:5000/favoritos/remover',
-                urlAbrirConversa: 'http://127.0.0.1:5000/publicacao/contactar',
                 urlCategorias: 'http://127.0.0.1:5000/categorias',
-                carregando: false,
+                carregando: true,
                 showModal: false,
                 tituloModal: "",
                 conteudoModal: "",
-                visibleCategories: [],
                 categorias: [],
+                visibleCategories: [],
                 itemsPerPage: 0,
                 currentIndex: 0,
+                showModalCadastrarPublicacao: false,
                 showModalVerPublicacao: false,
+                showModalProcurar: false,
+                fotoCarregada: false,
+                fotoPreview: null,
                 publicacaoClicada: {},
                 plantasEncontradas: [],
                 idPlantaBuscada: null,
@@ -43,11 +48,6 @@
                 nomePlantaProcurar: "",
                 mostrarSelectPlanta: false,
                 publicacoes: [],
-                filtroAtivo: null,
-                tipoFiltroAtivo: null,
-                showButtonCarregarMais: true,
-                limite: 16,  // Quantidade de publicações por vez
-                offset: 0,  // Posição inicial
             };
         },
         methods: {
@@ -55,46 +55,45 @@
                 this.showModalVerPublicacao = false;
                 this.showModal = false;
             },
-            abrirInputFoto() {
-                document.getElementById("input-foto").click()
+            closeModalCadastrarPublicacao() {
+                this.showModalCadastrarPublicacao = false;
+                this.fotoCarregada = false;
+                this.plantaBuscada = {};
             },
-            async carregarPublicacoes(string=null, tipo_filtro=null) {
-                if (this.carregando) return;
-
-                this.carregando = true;
+            openModalCadastrarPublicacao() {
+                this.showModalCadastrarPublicacao = true;
+            },
+            abrirModalProcurar() {
+                this.showModalProcurar = true;
+            },
+            closeModalProcurar() {
+                this.showModalProcurar = false;
+                // this.nomePlantaProcurar = "";
+            },
+            async carregarPublicacoes() {
                 try {
-                    let url = this.urlCarregarPublicacoes;
-                    
-                    // Se houver um filtro, ajusta a URL da requisição
-                    if (string && tipo_filtro) {
-                        this.filtroAtivo = string;
-                        this.tipoFiltroAtivo = tipo_filtro;
-                        url = tipo_filtro === 'categoria' ? this.urlFiltrarPubCategoria : this.urlFiltrarPubPlanta;
-                        url += `/${string}`;
-                    }
-
-                    // Adiciona os parâmetros de paginação
-                    url += `?limit=${this.limite}&offset=${this.offset}`;
-                    const response = await axios.get(url);
-
-                    if (response.data) {
-                        if (this.offset === 0) {
-                            this.publicacoes = response.data;  // Se for uma nova busca, substitui os dados
-                        } else {
-                            this.publicacoes.push(...response.data);  // Caso contrário, adiciona os novos resultados
-                        }
-                        this.offset += this.limite;
-                    }
-
-                    if (response.data.length == 0)
-                        this.showButtonCarregarMais = false;
-                    else
-                        this.showButtonCarregarMais = true;
-
+                    const response = await axios.get(this.urlCarregarPublicacoes + this.authStore.cod_usuario);
+                    this.publicacoes = response.data;
                 } catch (error) {
-                    console.error("Erro ao carregar publicações.");
+                    console.error("Erro ao carregar plantas.");
                 } finally {
                     this.carregando = false;
+                }
+            },
+            // Função para buscar publicações da API ao clicar em uma categoria ou pesquisar pelo nome da planta
+            async fetchPublicacoes(string, tipo_filtro) {
+                let url = "";
+
+                if (tipo_filtro === 'categoria')
+                    url = this.urlFiltrarPubCategoria;
+                else
+                    url = this.urlFiltrarPubPlanta;
+                
+                try {
+                    const response = await axios.get(url + '/' + string);
+                    this.publicacoes = response.data;
+                } catch (error) {
+                    console.error('Erro ao buscar publicações');
                 }
             },
             async getCategorias() {
@@ -108,7 +107,7 @@
                     this.categorias = await response.json().then((data) => data.map((item) => item.nome));
                     this.updateItemsPerPage();
                 } catch (error) {
-                    console.error("Erro ao buscar espécies.");
+                    console.error("Erro ao buscar espécies");
                 }
             },
             updateItemsPerPage() {
@@ -150,7 +149,7 @@
 
                     this.closeModalProcurar();
                 } else {
-                    console.error('Nenhuma planta foi selecionada.');
+                    console.error('Nenhuma planta foi selecionada');
                     this.mensagemErro = 'Por favor, selecione uma planta.';
                 }
             },
@@ -173,7 +172,7 @@
                         this.mensagemErro = "Nenhuma planta foi encontrada.";
                     }
                 } catch (error) {
-                    console.error("Erro ao buscar plantas.");
+                    console.error("Erro ao buscar plantas");
                     this.mensagemErro = "Erro ao buscar plantas. Tente novamente.";
                 }
             },
@@ -188,6 +187,9 @@
                     };
                     reader.readAsDataURL(file);
                 }
+            },
+            abrirInputFoto() {
+                document.getElementById("input-foto").click()
             },
             async cadastrarPublicacao() {
                 let dados = {
@@ -206,6 +208,7 @@
 
                     if (response.status === 200) {
                         this.closeModalCadastrarPublicacao();
+
                         this.tituloModal = "Sucesso";
                         this.conteudoModal = "Publicação cadastrada com sucesso!";
                         this.showModal = true;
@@ -215,28 +218,27 @@
                         this.showModal = true;
                     }
                 } catch (error) {
-                    console.error("Erro ao cadastrar planta.");
+                    console.error("Erro ao cadastrar planta");
                     this.tituloModal = "Erro";
                     this.conteudoModal = "Erro ao cadastrar publicação. Tente novamente.";
                     this.showModal = true;
                 }
             },
-            async openModalVerPublicacao(id, idDono, nomeDono, nomeComum, nomeCientifico, local, quantidade, foto, numero) {
+            async openModalVerPublicacao(id, nomeDono, nomeComum, nomeCientifico, local, quantidade, foto) {
                 this.showModalVerPublicacao = true;
                 this.publicacaoClicada = {
                     'id': id,
-                    'idDono': idDono,
                     'nomeDono': nomeDono,
                     'nomeComum': nomeComum,
                     'nomeCientifico': nomeCientifico,
                     'quantidade': quantidade,
-                    'contato': numero,
                     'local': local,
                     'foto': foto
                 }
             },
             async toggleFavorito(event, id) {
                 const icon = event.target;
+                let atualizarFavoritos = false;
                 let url = '';
 
                 if (icon.classList.contains('bi-heart')) {
@@ -245,6 +247,7 @@
                 } else {
                     icon.classList.replace('bi-heart-fill', 'bi-heart');
                     url = this.urlRemoveFavorito;
+                    atualizarFavoritos = true;
                 }
 
                 try {
@@ -252,15 +255,16 @@
                         usuario_id: this.authStore.cod_usuario,
                         publicacao_id: id
                     });
+
+                    if (response.status === 200 && atualizarFavoritos) 
+                        this.publicacoes = this.publicacoes.filter(p => p.id !== id);
+                    
                 } catch (error) {
-                    console.error('Erro ao favoritar.');
+                    console.error('Erro ao favoritar');
                 }
             },
             abrirConversa(id) {
                 let usuario_id = this.authStore.cod_usuario;
-
-                if (!usuario_id)
-                    window.location.href = '/login';
 
                 axios.post(this.urlAbrirConversa, {
                     usuario_id: usuario_id,
@@ -272,11 +276,8 @@
                         this.$router.push({ path: '/chat', query: { conversa: conversaId } });
                     }
                 }).catch((error) => {
-                    console.error("Erro ao abrir conversa.");
+                    console.error("Erro ao abrir conversa");
                 });
-            },
-            irParaPublicacoesUsuario(usuario_id) {
-                this.$router.push({ name: 'publicacoes_usuario', query: { usuario_id } });
             }
         },
         computed: {
@@ -288,15 +289,16 @@
                     return acc;
                 }, []);
             },
-            // publicacoesComFavoritos() {
-            //     return this.publicacoes.map(pub => ({
-            //         ...pub,
-            //         favorita: this.authStore.favoritos.includes(pub.id) // Verifica se o ID está na lista de favoritos
-            //     }));
-            // }
+            publicacoesComFavoritos() {
+                console.log(this.authStore.favoritos);
+
+                return this.publicacoes.map(pub => ({
+                    ...pub,
+                    favorita: this.authStore.favoritos.includes(pub.id) // Verifica se o ID está na lista de favoritos
+                }));
+            }
         },
         mounted() {
-            this.getCategorias();
             this.carregarPublicacoes();
             window.addEventListener("resize", this.updateItemsPerPage);
         },
@@ -307,7 +309,6 @@
 </script>
 
 <template>
-
     <ModalMensagem 
         :showModal="showModal" 
         :titleModal="tituloModal"
@@ -329,8 +330,8 @@
                         {{ publicacaoClicada.nomeCientifico }}
                     </p>
                 </div>
-                <p class="ver-dono-publicacao" @click="irParaPublicacoesUsuario(publicacaoClicada.idDono)">
-                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeDono }} <i class="bi bi-person-circle"></i>
+                <p>
+                    <strong>Dono(a):</strong> {{ publicacaoClicada.nomeDono }}
                 </p>
                 <p class="py-2">
                     <strong>Localidade:</strong> {{ publicacaoClicada.local }}
@@ -348,42 +349,160 @@
         <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
     </div>
 
-    <Menu @barraPesquisa="carregarPublicacoes" />
+    <!-- Modal de Cadastrar Publicacao -->
+    <div v-if="showModalCadastrarPublicacao" class="modal is-active">
+        <div class="modal-background" @click="closeModalCadastrarPublicacao"></div>
+        <div class="modal-content is-flex is-justify-content-center px-5">
+            <div class="box">
+                <div class="is-flex is-flex-direction-column is-justify-align-items-center">
+                    <div class="container-foto is-clickable" @click="abrirInputFoto()">
+
+                        <!-- Slot-foto: Aparece apenas se não houver uma imagem carregada -->
+                        <div
+                            id="slot-foto" 
+                            v-if="!fotoCarregada"
+                            class="is-flex is-justify-content-center is-align-items-center"
+                        >
+                            <i class="bi bi-image-fill"></i>
+                        </div>
+
+                        <!-- Foto-preview: Aparece apenas se uma imagem for carregada -->
+                        <img
+                            v-if="fotoCarregada"
+                            id="foto-preview"
+                            :src="fotoPreview"
+                            class="imagem-planta is-clickable"
+                            alt="Pré-visualização da foto"
+                        />
+
+                        <!-- Input de arquivo -->
+                        <input
+                            id="input-foto"
+                            type="file"
+                            accept="image/*"
+                            @change="previewFile"
+                            hidden
+                        />
+
+                        <span class="label-imagem is-size-7">
+                            click para adicionar uma foto
+                        </span>
+                    </div>
+                </div>
+                <div v-if="this.plantaBuscada" class="is-flex is-flex-direction-column">
+                    <span class="has-text-centered has-text-weight-bold is-size-6">
+                        {{ plantaBuscada.nome_popular }}
+                    </span>
+                    <span class="has-text-centered is-size-7 pt-1 pb-3">
+                        {{ plantaBuscada.nome_cientifico }}
+                    </span>
+                </div>
+                <div class="is-flex is-justify-content-space-between is-align-items-center pb-1">
+                    <label for="nome-planta" class="text-nowrap">
+                        Nome da planta:
+                    </label>
+                    <button class="btn btn-nome-planta is-size-7" @click="abrirModalProcurar">
+                        <span>Procurar</span>
+                        <i class="bi bi-search ml-3"></i>
+                    </button>
+                </div>
+                <div class="is-flex is-justify-content-space-between is-align-items-center py-2">
+                    <label for="quatidade-mudas" class="text-nowrap mr-2">
+                        Quantas mudas?
+                    </label>
+                    <input id="quatidade-mudas" type="number" min="0">
+                </div>
+                <div class="btn-cadastrar is-flex is-justify-content-center mt-4 py-3" @click="cadastrarPublicacao">
+                    Cadastrar
+                </div>
+            </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close" @click="closeModalCadastrarPublicacao"></button>
+    </div>
+
+    <!-- Modal de Procurar Publicacao -->
+    <div v-if="showModalProcurar" id="modalProcurarPlanta" class="modal is-active">
+        <div class="modal-background" @click="closeModalProcurar"></div>
+        <div class="modal-content is-flex is-justify-content-center px-5">
+            <div class="box">
+                <div class="field">
+                    <label for="procurar-planta" class="label mb-3">
+                        Nome da planta:
+                    </label>
+                    <div class="campo-pesquisa px-4 py-2">
+                        <input
+                            id="procurar-planta"
+                            v-model="nomePlantaProcurar"
+                            placeholder="Digite o nome da planta"
+                        />
+                        <i class="bi bi-search is-clickable" @click="buscarPlantas"></i>
+                    </div>
+                    <div class="is-flex is-justify-content-end">
+                        <span class="is-size-7 mt-1 mb-4">
+                            Digite pelo menos 3 letras
+                        </span>
+                    </div>
+                    <div v-if="plantasEncontradas.length" class="select is-multiple">
+                        <select id="select-planta" v-model="idPlantaBuscada" multiple size="7">
+                            <option
+                                v-for="planta in plantasEncontradas"
+                                :key="planta.id"
+                                :value="planta.id"
+                            >
+                                {{ planta.nome }}
+                            </option>
+                        </select>
+                    </div>
+                    <span v-else-if="mensagemErro" class="has-text-danger is-size-7">
+                        {{ mensagemErro }}
+                    </span>
+                </div>
+                <div class="is-flex is-justify-content-space-between mt-4">
+                    <button class="button mr-2" @click="closeModalProcurar">
+                        Cancelar
+                    </button>
+                    <button class="button is-primary ml-2" @click="confirmarPlanta">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close" @click="closeModalProcurar"></button>
+    </div>
+
+    <Menu :exibirPesquisa="false" />
 
     <div>
         <div class="banner">
             <h2 class="has-text-white is-size-4 px-3">
-                DOE MUDAS, SEMEIE O FUTURO.
+                MEUS FAVORITOS
             </h2>
         </div>
-        <ul class="nav-especies py-4 px-2">
+        <!-- <ul class="nav-especies py-4 px-2">
             <div class="container container-categorias is-flex is-justify-content-space-between is-align-items-center">
                 <i class="bi bi-chevron-left is-size-5 is-clickable pr-1" @click="scrollLeft"></i>
                 <li v-for="(categoria, index) in this.visibleCategories" :key="index">
-                    <span @click="offset=0; carregarPublicacoes(categoria, 'categoria');">
+                    <span @click="fetchPublicacoes(categoria, 'categoria')">
                         {{ categoria }}
                     </span>
                 </li>
                 <i class="bi bi-chevron-right is-size-5 is-clickable px-1" @click="scrollRight"></i>
             </div>
-        </ul>
+        </ul> -->
     </div>
-
-    <div class="container container-publicacoes mt-3 pb-5">
+    <div class="container container-publicacoes mt-3 pb-6">
         <div v-for="(grupo, index) in gruposDePlantas" :key="index" class="columns is-4">
             <div 
                 v-for="(publicacao, i) in grupo" :key="i" 
                 class="card-planta column is-3 is-flex is-flex-direction-column is-align-items-center is-clickable"
                 @click="openModalVerPublicacao(
                     publicacao.id,
-                    publicacao.usuario.id,
                     publicacao.usuario.nome.split(' ')[0],
                     publicacao.planta.nome_popular,
                     publicacao.planta.nome_cientifico, 
                     publicacao.usuario.bairro,
                     publicacao.quantidade,
-                    publicacao.foto.imagem_base64,
-                    publicacao.usuario.numero
+                    publicacao.foto.imagem_base64
                 )"
             >
                 <img :src=publicacao.foto.imagem_base64 class="foto-publicacao" alt="foto da planta">
@@ -397,7 +516,7 @@
                         </span>
                     </div>
                     <i 
-                        :class="['bi', 'bi-heart', 'is-size-5', 'is-clickable']" 
+                        :class="['bi', 'bi-heart-fill', 'is-size-5', 'is-clickable']" 
                         @click.stop="toggleFavorito($event, publicacao.id)"
                     ></i>
                     
@@ -415,11 +534,6 @@
                 </span>
             </div>
         </div>
-        <div v-if="showButtonCarregarMais" class="is-flex is-justify-content-center mt-6">
-            <button class="button is-primary" @click="carregarPublicacoes(filtroAtivo, tipoFiltroAtivo)" :disabled="carregando" style="width: 200px;">
-                {{ carregando ? "Carregando..." : "Carregar Mais" }}
-            </button>
-        </div>
     </div>
 
     <RodaPe />
@@ -430,7 +544,6 @@
     .container-publicacoes {
         min-height: 75vh;
     }
-
     .banner {
         background-image: url('@/assets/images/banner_inicio2.jpg');
         background-size: cover;
@@ -468,7 +581,7 @@
         }
 
         span:hover {
-            color: #81b5b0;
+            color: var(--verde-secundario);
         }
     }
 
@@ -599,11 +712,12 @@
         }
     }
 
-    .ver-dono-publicacao {
-        color: var(--cor-principal) !important;
-        font-weight: 500;
-        cursor: pointer;
-    }
+    /* .foto-publicacao {
+        width: 250px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 3px;
+    } */
 
     @media screen and (max-width: 768px) {
         .nav-especies li {
